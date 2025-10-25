@@ -3,129 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vector Breaker - Трассировщик</title>
+    <title>Vector Breaker - Мобильный редактор</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a2e;
             color: white;
             overflow: hidden;
+            touch-action: none;
         }
 
-        .container {
-            display: flex;
+        .app-container {
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .toolbar {
-            width: 300px;
+        /* Верхняя панель */
+        .top-bar {
             background: #16213e;
-            padding: 20px;
+            padding: 10px 15px;
+            border-bottom: 2px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .file-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:active {
+            background: #ff6b81;
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: #0f3460;
+        }
+
+        .btn-secondary:active {
+            background: #1a4a7a;
+        }
+
+        /* Основная область */
+        .main-area {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Боковая панель инструментов */
+        .tool-panel {
+            width: 70px;
+            background: #16213e;
             border-right: 2px solid #0f3460;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
-        }
-
-        .tool-group {
-            background: #0f3460;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .tool-group h3 {
-            margin-bottom: 10px;
-            color: #e94560;
-            font-size: 14px;
-        }
-
-        .tools {
-            display: flex;
-            flex-wrap: wrap;
+            padding: 10px 5px;
             gap: 8px;
         }
 
         .tool {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             background: #1a1a2e;
             border: 2px solid #e94560;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 18px;
+            font-size: 24px;
+            transition: all 0.3s;
         }
 
         .tool.active {
             background: #e94560;
+            transform: scale(1.05);
         }
 
-        .color-palette {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+        .tool:active {
+            transform: scale(0.95);
         }
 
-        .color {
-            width: 25px;
-            height: 25px;
-            border: 2px solid transparent;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .color.active {
-            border-color: white;
-        }
-
-        .property-control {
-            margin: 8px 0;
-        }
-
-        .property-control label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 12px;
-        }
-
-        .property-control input, .property-control select {
-            width: 100%;
-            padding: 4px;
-            border-radius: 4px;
-            border: 1px solid #e94560;
-            background: #1a1a2e;
-            color: white;
-        }
-
+        /* Область рисования */
         .canvas-container {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            position: relative;
             background: #2d2d44;
-            position: relative;
-        }
-
-        .canvas-toolbar {
-            padding: 10px 20px;
-            background: #0f3460;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .canvas-area {
-            flex: 1;
-            position: relative;
             overflow: hidden;
         }
 
@@ -142,196 +141,962 @@
             left: 0;
             pointer-events: none;
             opacity: 0.7;
+            max-width: 100%;
+            max-height: 100%;
         }
 
-        .grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            opacity: 0.1;
+        /* Нижняя панель свойств */
+        .properties-panel {
+            background: #16213e;
+            padding: 15px;
+            border-top: 2px solid #0f3460;
+            min-height: 120px;
         }
 
-        .btn {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 8px 15px;
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .property-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .property-label {
+            font-size: 12px;
+            color: #e94560;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+
+        .color {
+            width: 30px;
+            height: 30px;
+            border: 2px solid transparent;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
-            transition: background 0.3s;
-            margin: 2px;
         }
 
-        .btn:hover {
-            background: #ff6b81;
+        .color.active {
+            border-color: white;
+            transform: scale(1.1);
         }
 
-        .btn-secondary {
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
             background: #0f3460;
+            outline: none;
+            -webkit-appearance: none;
         }
 
-        .btn-secondary:hover {
-            background: #1a4a7a;
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid #e94560;
+            background: #1a1a2e;
+            color: white;
+            font-size: 14px;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            border: 2px solid #e94560;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            color: #e94560;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
         }
 
         .file-input {
             display: none;
         }
 
+        /* Статус бар */
         .status-bar {
-            padding: 8px 20px;
             background: #0f3460;
+            padding: 8px 15px;
             font-size: 12px;
             display: flex;
             justify-content: space-between;
-        }
-
-        .image-controls {
-            display: flex;
-            gap: 10px;
             align-items: center;
+            min-height: 40px;
         }
 
-        .point-info {
-            position: absolute;
-            background: rgba(0,0,0,0.8);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 1000;
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .tool-panel {
+                width: 60px;
+            }
+            
+            .tool {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .properties-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tool-panel {
+                width: 50px;
+                padding: 5px;
+            }
+            
+            .tool {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Улучшения для touch */
+        .touch-feedback:active {
+            opacity: 0.7;
+        }
+
+        /* Scrollable areas */
+        .scrollable {
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Левая панель инструментов -->
-        <div class="toolbar">
-            <div class="tool-group">
-                <h3>Загрузка изображения</h3>
-                <input type="file" id="imageInput" accept="image/*" class="file-input">
-                <button class="btn" id="loadImageBtn">Загрузить изображение</button>
-                <div class="property-control">
-                    <label>Прозрачность: <span id="opacityValue">70%</span></label>
-                    <input type="range" id="imageOpacity" min="0" max="100" value="70">
-                </div>
-                <button class="btn btn-secondary" id="clearImageBtn">Удалить изображение</button>
+    <div class="app-container">
+        <!-- Верхняя панель с кнопками загрузки/сохранения -->
+        <div class="top-bar">
+            <div class="logo">Vector Breaker</div>
+            <div class="file-controls">
+                <button class="btn btn-secondary" id="loadImageBtn">
+                    📁 Загрузить
+                </button>
+                <button class="btn" id="saveBtn">
+                    💾 Сохранить
+                </button>
+                <button class="btn btn-secondary" id="menuBtn">
+                    ⋮ Меню
+                </button>
+            </div>
+        </div>
+
+        <!-- Основная область -->
+        <div class="main-area">
+            <!-- Боковая панель инструментов -->
+            <div class="tool-panel">
+                <div class="tool active" data-tool="pen" title="Перо">✏️</div>
+                <div class="tool" data-tool="select" title="Выделение">↖</div>
+                <div class="tool" data-tool="rectangle" title="Прямоугольник">□</div>
+                <div class="tool" data-tool="circle" title="Круг">○</div>
+                <div class="tool" data-tool="line" title="Линия">📏</div>
+                <div class="tool" data-tool="erase" title="Ластик">🧹</div>
             </div>
 
-            <div class="tool-group">
-                <h3>Инструменты трассировки</h3>
-                <div class="tools">
-                    <div class="tool active" data-tool="pen" title="Перо (P)">✏️</div>
-                    <div class="tool" data-tool="select" title="Выделение (V)">↖</div>
-                    <div class="tool" data-tool="add-point" title="Добавить точку (A)">⊕</div>
-                    <div class="tool" data-tool="delete-point" title="Удалить точку (D)">⊖</div>
-                    <div class="tool" data-tool="rectangle" title="Прямоугольник (R)">□</div>
-                    <div class="tool" data-tool="circle" title="Круг (C)">○</div>
-                </div>
-                <div class="property-control">
-                    <label>Режим:</label>
-                    <select id="pathMode">
-                        <option value="closed">Замкнутый контур</option>
-                        <option value="open">Разомкнутый контур</option>
-                    </select>
-                </div>
+            <!-- Область рисования -->
+            <div class="canvas-container">
+                <img id="referenceImage" style="display: none;">
+                <canvas id="drawingCanvas"></canvas>
             </div>
+        </div>
 
-            <div class="tool-group">
-                <h3>Свойства фигуры</h3>
-                <div class="color-palette" id="colorPalette">
-                    <!-- Colors will be generated by JavaScript -->
+        <!-- Нижняя панель свойств -->
+        <div class="properties-panel">
+            <div class="properties-grid">
+                <div class="property-group">
+                    <div class="property-label">Цвет</div>
+                    <div class="color-palette">
+                        <div class="color active" style="background: #ff0000;" data-color="#ff0000"></div>
+                        <div class="color" style="background: #00ff00;" data-color="#00ff00"></div>
+                        <div class="color" style="background: #0000ff;" data-color="#0000ff"></div>
+                        <div class="color" style="background: #ffff00;" data-color="#ffff00"></div>
+                        <div class="color" style="background: #ff00ff;" data-color="#ff00ff"></div>
+                        <div class="color" style="background: #00ffff;" data-color="#00ffff"></div>
+                        <div class="color" style="background: #ffffff;" data-color="#ffffff"></div>
+                        <div class="color" style="background: #000000;" data-color="#000000"></div>
+                    </div>
                 </div>
-                <input type="color" id="customColor" value="#ff0000" style="width: 100%; margin: 5px 0;">
-                
-                <div class="property-control">
-                    <label>Толщина обводки:</label>
-                    <input type="range" id="strokeWidth" min="1" max="10" value="2">
-                </div>
-                <div class="property-control">
-                    <label>Заливка:</label>
-                    <select id="fillMode">
-                        <option value="filled">Заливка</option>
-                        <option value="stroked">Только обводка</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="tool-group">
-                <h3>Свойства блока</h3>
-                <div class="property-control">
-                    <label>Прочность:</label>
-                    <input type="range" id="blockHealth" min="1" max="3" value="1">
+                <div class="property-group">
+                    <div class="property-label">Толщина: <span id="widthValue">2</span></div>
+                    <input type="range" class="slider" id="strokeWidth" min="1" max="10" value="2">
                 </div>
-                <div class="property-control">
-                    <label>Эффект:</label>
+
+                <div class="property-group">
+                    <div class="property-label">Прочность: <span id="healthValue">1</span></div>
+                    <input type="range" class="slider" id="blockHealth" min="1" max="3" value="1">
+                </div>
+
+                <div class="property-group">
+                    <div class="property-label">Эффект</div>
                     <select id="blockEffect">
                         <option value="none">Нет</option>
                         <option value="multiball">Мультимяч</option>
                         <option value="expand">Расширение</option>
                         <option value="fireball">Огненный шар</option>
-                        <option value="explosive">Взрывной</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="tool-group">
-                <h3>Файлы</h3>
-                <button class="btn" id="newBtn">Новый</button>
-                <button class="btn" id="saveBtn">Сохранить проект</button>
-                <button class="btn" id="exportBtn">Экспорт в игру</button>
-            </div>
+                <div class="property-group">
+                    <div class="property-label">Прозрачность: <span id="opacityValue">70%</span></div>
+                    <input type="range" class="slider" id="imageOpacity" min="0" max="100" value="70">
+                </div>
 
-            <div class="tool-group">
-                <h3>Управление</h3>
-                <button class="btn" id="undoBtn">↶ Отмена (Ctrl+Z)</button>
-                <button class="btn" id="redoBtn">↷ Повтор (Ctrl+Y)</button>
-                <button class="btn" id="clearBtn">Очистить холст</button>
-                <div style="font-size: 10px; margin-top: 10px; opacity: 0.7;">
-                    <div>ПКМ - добавить точку</div>
-                    <div>Shift - привязка к углам</div>
-                    <div>Ctrl - выделить несколько</div>
+                <div class="property-group">
+                    <div class="property-label">Режим</div>
+                    <select id="displayMode">
+                        <option value="both">Изобр + Вектор</option>
+                        <option value="vector">Только вектор</option>
+                        <option value="image">Только изобр</option>
+                    </select>
                 </div>
             </div>
         </div>
 
-        <!-- Область рисования -->
-        <div class="canvas-container">
-            <div class="canvas-toolbar">
-                <div>
-                    <span>Масштаб: </span>
-                    <button class="btn" id="zoomOutBtn">-</button>
-                    <span id="zoomLevel">100%</span>
-                    <button class="btn" id="zoomInBtn">+</button>
-                    <button class="btn" id="resetViewBtn">Сброс вида</button>
-                </div>
-                <div class="image-controls">
-                    <span>Режим: </span>
-                    <select id="displayMode">
-                        <option value="both">Изображение + Вектор</option>
-                        <option value="vector">Только вектор</option>
-                        <option value="image">Только изображение</option>
-                    </select>
-                </div>
-            </div>
+        <!-- Статус бар -->
+        <div class="status-bar">
+            <span id="cursorPos">X: 0, Y: 0</span>
+            <span id="toolInfo">Инструмент: Перо</span>
+            <span>Масштаб: <span id="zoomLevel">100%</span></span>
+        </div>
+    </div>
+
+    <!-- Модальное окно загрузки изображения -->
+    <div class="modal" id="loadImageModal">
+        <div class="modal-content">
+            <div class="modal-title">Загрузить изображение</div>
+            <p style="margin-bottom: 15px; text-align: center;">Выберите изображение для трассировки</p>
             
-            <div class="canvas-area">
-                <img id="referenceImage" style="display: none;">
-                <canvas id="drawingCanvas"></canvas>
-                <canvas class="grid" id="gridCanvas"></canvas>
-                <div id="pointInfo" class="point-info" style="display: none;"></div>
-            </div>
+            <input type="file" id="imageInput" class="file-input" accept="image/*">
             
-            <div class="status-bar">
-                <span id="cursorPos">X: 0, Y: 0</span>
-                <span id="toolInfo">Инструмент: Перо</span>
-                <span>Vector Breaker - Трассировщик</span>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="document.getElementById('imageInput').click()">
+                    📸 Выбрать файл
+                </button>
+                <button class="btn" id="confirmLoadBtn">
+                    ✅ Загрузить
+                </button>
+                <button class="btn btn-secondary" id="cancelLoadBtn">
+                    ❌ Отмена
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="editor.js"></script>
+    <!-- Модальное окно сохранения -->
+    <div class="modal" id="saveModal">
+        <div class="modal-content">
+            <div class="modal-title">Сохранить проект</div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">Название уровня:</label>
+                <input type="text" id="levelName" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #e94560; background: #1a1a2e; color: white;" value="Мой уровень">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">Автор:</label>
+                <input type="text" id="authorName" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #e94560; background: #1a1a2e; color: white;" value="Аноним">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn" id="saveProjectBtn">
+                    💾 Сохранить проект
+                </button>
+                <button class="btn btn-secondary" id="exportGameBtn">
+                    🎮 Экспорт в игру
+                </button>
+                <button class="btn btn-secondary" id="cancelSaveBtn">
+                    ❌ Отмена
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно меню -->
+    <div class="modal" id="menuModal">
+        <div class="modal-content">
+            <div class="modal-title">Меню</div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn" id="newProjectBtn">
+                    🆕 Новый проект
+                </button>
+                <button class="btn btn-secondary" id="loadProjectBtn">
+                    📂 Загрузить проект
+                </button>
+                <button class="btn btn-secondary" id="clearCanvasBtn">
+                    🧹 Очистить холст
+                </button>
+                <button class="btn btn-secondary" id="settingsBtn">
+                    ⚙️ Настройки
+                </button>
+                <button class="btn btn-secondary" id="closeMenuBtn">
+                    ❌ Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MobileVectorEditor {
+            constructor() {
+                this.canvas = document.getElementById('drawingCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.referenceImage = document.getElementById('referenceImage');
+                
+                // Состояние редактора
+                this.currentTool = 'pen';
+                this.currentColor = '#ff0000';
+                this.strokeWidth = 2;
+                this.blockHealth = 1;
+                this.blockEffect = 'none';
+                this.imageOpacity = 0.7;
+                this.displayMode = 'both';
+                
+                // Векторные данные
+                this.shapes = [];
+                this.currentPath = null;
+                this.selectedShape = null;
+                
+                // История
+                this.history = [];
+                this.historyIndex = -1;
+                
+                // Трансформации
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.lastTouch = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.setupModals();
+                this.render();
+            }
+            
+            setupCanvas() {
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+                
+                // Устанавливаем размеры canvas как у контейнера
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+            }
+            
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.render();
+            }
+            
+            setupEventListeners() {
+                // Инструменты
+                document.querySelectorAll('.tool').forEach(tool => {
+                    tool.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        this.currentTool = e.currentTarget.dataset.tool;
+                        this.updateToolInfo();
+                    });
+                });
+                
+                // Цвета
+                document.querySelectorAll('.color').forEach(color => {
+                    color.addEventListener('click', (e) => {
+                        document.querySelectorAll('.color').forEach(c => c.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        this.currentColor = e.currentTarget.dataset.color;
+                    });
+                });
+                
+                // Слайдеры
+                document.getElementById('strokeWidth').addEventListener('input', (e) => {
+                    this.strokeWidth = parseInt(e.target.value);
+                    document.getElementById('widthValue').textContent = this.strokeWidth;
+                });
+                
+                document.getElementById('blockHealth').addEventListener('input', (e) => {
+                    this.blockHealth = parseInt(e.target.value);
+                    document.getElementById('healthValue').textContent = this.blockHealth;
+                });
+                
+                document.getElementById('imageOpacity').addEventListener('input', (e) => {
+                    this.imageOpacity = e.target.value / 100;
+                    document.getElementById('opacityValue').textContent = e.target.value + '%';
+                    this.referenceImage.style.opacity = this.imageOpacity;
+                });
+                
+                document.getElementById('blockEffect').addEventListener('change', (e) => {
+                    this.blockEffect = e.target.value;
+                });
+                
+                document.getElementById('displayMode').addEventListener('change', (e) => {
+                    this.displayMode = e.target.value;
+                    this.updateDisplayMode();
+                });
+                
+                // События касания для canvas
+                this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
+                this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
+                this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
+                
+                // Обновление позиции курсора
+                this.canvas.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    const pos = this.getTouchPos(touch);
+                    document.getElementById('cursorPos').textContent = `X: ${Math.round(pos.x)}, Y: ${Math.round(pos.y)}`;
+                });
+            }
+            
+            setupModals() {
+                // Кнопки верхней панели
+                document.getElementById('loadImageBtn').addEventListener('click', () => {
+                    this.showModal('loadImageModal');
+                });
+                
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.showModal('saveModal');
+                });
+                
+                document.getElementById('menuBtn').addEventListener('click', () => {
+                    this.showModal('menuModal');
+                });
+                
+                // Модальное окно загрузки изображения
+                document.getElementById('imageInput').addEventListener('change', (e) => this.handleImageSelect(e));
+                document.getElementById('confirmLoadBtn').addEventListener('click', () => this.loadSelectedImage());
+                document.getElementById('cancelLoadBtn').addEventListener('click', () => this.hideModal('loadImageModal'));
+                
+                // Модальное окно сохранения
+                document.getElementById('saveProjectBtn').addEventListener('click', () => this.saveProject());
+                document.getElementById('exportGameBtn').addEventListener('click', () => this.exportToGame());
+                document.getElementById('cancelSaveBtn').addEventListener('click', () => this.hideModal('saveModal'));
+                
+                // Модальное окно меню
+                document.getElementById('newProjectBtn').addEventListener('click', () => this.newProject());
+                document.getElementById('loadProjectBtn').addEventListener('click', () => this.loadProject());
+                document.getElementById('clearCanvasBtn').addEventListener('click', () => this.clearCanvas());
+                document.getElementById('closeMenuBtn').addEventListener('click', () => this.hideModal('menuModal'));
+                
+                // Закрытие модальных окон по клику вне области
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.hideModal(modal.id);
+                        }
+                    });
+                });
+            }
+            
+            showModal(modalId) {
+                document.getElementById(modalId).style.display = 'flex';
+            }
+            
+            hideModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+            
+            getTouchPos(touch) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: (touch.clientX - rect.left - this.offsetX) / this.scale,
+                    y: (touch.clientY - rect.top - this.offsetY) / this.scale
+                };
+            }
+            
+            onTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const pos = this.getTouchPos(touch);
+                this.lastTouch = { x: touch.clientX, y: touch.clientY };
+                
+                switch (this.currentTool) {
+                    case 'pen':
+                        this.startNewPath(pos);
+                        break;
+                    case 'rectangle':
+                    case 'circle':
+                    case 'line':
+                        this.startPrimitiveShape(pos);
+                        break;
+                }
+                
+                this.render();
+            }
+            
+            onTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const pos = this.getTouchPos(touch);
+                
+                // Обработка масштабирования/панорамирования двумя пальцами
+                if (e.touches.length === 2) {
+                    this.handlePinchZoom(e);
+                    return;
+                }
+                
+                switch (this.currentTool) {
+                    case 'pen':
+                        this.addPointToCurrentPath(pos);
+                        break;
+                    case 'rectangle':
+                    case 'circle':
+                    case 'line':
+                        this.updatePrimitiveShape(pos);
+                        break;
+                }
+                
+                this.lastTouch = { x: touch.clientX, y: touch.clientY };
+                this.render();
+            }
+            
+            onTouchEnd(e) {
+                switch (this.currentTool) {
+                    case 'pen':
+                        this.finalizePath();
+                        break;
+                    case 'rectangle':
+                    case 'circle':
+                    case 'line':
+                        this.finalizePrimitiveShape();
+                        break;
+                }
+                
+                this.saveToHistory();
+                this.lastTouch = null;
+            }
+            
+            handlePinchZoom(e) {
+                if (e.touches.length !== 2) return;
+                
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                
+                const currentDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+                
+                if (this.lastPinchDistance) {
+                    const scaleFactor = currentDistance / this.lastPinchDistance;
+                    this.zoom(scaleFactor, (touch1.clientX + touch2.clientX) / 2, (touch1.clientY + touch2.clientY) / 2);
+                }
+                
+                this.lastPinchDistance = currentDistance;
+            }
+            
+            zoom(factor, x, y) {
+                const oldScale = this.scale;
+                this.scale *= factor;
+                this.scale = Math.max(0.1, Math.min(5, this.scale));
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const worldX = (x - rect.left - this.offsetX) / oldScale;
+                const worldY = (y - rect.top - this.offsetY) / oldScale;
+                
+                this.offsetX = x - rect.left - worldX * this.scale;
+                this.offsetY = y - rect.top - worldY * this.scale;
+                
+                document.getElementById('zoomLevel').textContent = Math.round(this.scale * 100) + '%';
+                this.render();
+            }
+            
+            // Методы для работы с путями
+            startNewPath(pos) {
+                this.currentPath = {
+                    type: 'path',
+                    points: [this.snapPoint(pos)],
+                    color: this.currentColor,
+                    strokeWidth: this.strokeWidth,
+                    health: this.blockHealth,
+                    effect: this.blockEffect
+                };
+            }
+            
+            addPointToCurrentPath(pos) {
+                if (this.currentPath) {
+                    const snappedPos = this.snapPoint(pos);
+                    const lastPoint = this.currentPath.points[this.currentPath.points.length - 1];
+                    const distance = Math.sqrt(Math.pow(snappedPos.x - lastPoint.x, 2) + Math.pow(snappedPos.y - lastPoint.y, 2));
+                    
+                    if (distance > 3) {
+                        this.currentPath.points.push(snappedPos);
+                    }
+                }
+            }
+            
+            finalizePath() {
+                if (this.currentPath && this.currentPath.points.length > 1) {
+                    this.shapes.push(this.currentPath);
+                    this.currentPath = null;
+                }
+            }
+            
+            // Методы для примитивных фигур
+            startPrimitiveShape(pos) {
+                this.currentPath = {
+                    type: this.currentTool,
+                    x: pos.x,
+                    y: pos.y,
+                    width: 0,
+                    height: 0,
+                    color: this.currentColor,
+                    strokeWidth: this.strokeWidth,
+                    health: this.blockHealth,
+                    effect: this.blockEffect
+                };
+                
+                if (this.currentTool === 'circle') {
+                    this.currentPath.radius = 0;
+                }
+            }
+            
+            updatePrimitiveShape(pos) {
+                if (this.currentPath) {
+                    if (this.currentTool === 'rectangle') {
+                        this.currentPath.width = pos.x - this.currentPath.x;
+                        this.currentPath.height = pos.y - this.currentPath.y;
+                    } else if (this.currentTool === 'circle') {
+                        this.currentPath.radius = Math.sqrt(
+                            Math.pow(pos.x - this.currentPath.x, 2) + 
+                            Math.pow(pos.y - this.currentPath.y, 2)
+                        );
+                    } else if (this.currentTool === 'line') {
+                        this.currentPath.width = pos.x - this.currentPath.x;
+                        this.currentPath.height = pos.y - this.currentPath.y;
+                    }
+                }
+            }
+            
+            finalizePrimitiveShape() {
+                if (this.currentPath) {
+                    const hasSize = this.currentTool === 'rectangle' ? 
+                        Math.abs(this.currentPath.width) > 5 && Math.abs(this.currentPath.height) > 5 :
+                        this.currentTool === 'circle' ? this.currentPath.radius > 5 :
+                        Math.abs(this.currentPath.width) > 5 || Math.abs(this.currentPath.height) > 5;
+                    
+                    if (hasSize) {
+                        this.shapes.push(this.currentPath);
+                    }
+                    this.currentPath = null;
+                }
+            }
+            
+            snapPoint(pos) {
+                const gridSize = 10;
+                return {
+                    x: Math.round(pos.x / gridSize) * gridSize,
+                    y: Math.round(pos.y / gridSize) * gridSize
+                };
+            }
+            
+            render() {
+                this.ctx.save();
+                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.restore();
+                
+                this.ctx.save();
+                this.ctx.translate(this.offsetX, this.offsetY);
+                this.ctx.scale(this.scale, this.scale);
+                
+                // Рендерим фигуры
+                this.shapes.forEach(shape => {
+                    this.drawShape(shape);
+                });
+                
+                // Рендерим текущий путь
+                if (this.currentPath) {
+                    this.drawShape(this.currentPath);
+                }
+                
+                this.ctx.restore();
+            }
+            
+            drawShape(shape) {
+                this.ctx.strokeStyle = shape.color;
+                this.ctx.fillStyle = shape.color;
+                this.ctx.lineWidth = shape.strokeWidth;
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                
+                switch (shape.type) {
+                    case 'path':
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+                        
+                        for (let i = 1; i < shape.points.length; i++) {
+                            this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+                        }
+                        
+                        this.ctx.stroke();
+                        break;
+                        
+                    case 'rectangle':
+                        this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+                        break;
+                        
+                    case 'circle':
+                        this.ctx.beginPath();
+                        this.ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
+                        this.ctx.stroke();
+                        break;
+                        
+                    case 'line':
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(shape.x, shape.y);
+                        this.ctx.lineTo(shape.x + shape.width, shape.y + shape.height);
+                        this.ctx.stroke();
+                        break;
+                }
+            }
+            
+            updateToolInfo() {
+                const toolNames = {
+                    'pen': 'Перо',
+                    'select': 'Выделение',
+                    'rectangle': 'Прямоугольник',
+                    'circle': 'Круг',
+                    'line': 'Линия',
+                    'erase': 'Ластик'
+                };
+                document.getElementById('toolInfo').textContent = `Инструмент: ${toolNames[this.currentTool]}`;
+            }
+            
+            updateDisplayMode() {
+                switch (this.displayMode) {
+                    case 'both':
+                        this.referenceImage.style.display = 'block';
+                        break;
+                    case 'vector':
+                        this.referenceImage.style.display = 'none';
+                        break;
+                    case 'image':
+                        this.referenceImage.style.display = 'block';
+                        break;
+                }
+            }
+            
+            // Работа с изображениями
+            handleImageSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        this.selectedImageData = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            loadSelectedImage() {
+                if (this.selectedImageData) {
+                    this.referenceImage.src = this.selectedImageData;
+                    this.referenceImage.style.display = 'block';
+                    this.centerImage();
+                    this.hideModal('loadImageModal');
+                    this.render();
+                } else {
+                    alert('Сначала выберите файл!');
+                }
+            }
+            
+            centerImage() {
+                if (this.referenceImage.src) {
+                    const container = this.canvas.parentElement;
+                    const imgAspect = this.referenceImage.naturalWidth / this.referenceImage.naturalHeight;
+                    const containerAspect = container.clientWidth / container.clientHeight;
+                    
+                    let scale;
+                    if (imgAspect > containerAspect) {
+                        scale = container.clientWidth / this.referenceImage.naturalWidth;
+                    } else {
+                        scale = container.clientHeight / this.referenceImage.naturalHeight;
+                    }
+                    
+                    this.referenceImage.style.width = (this.referenceImage.naturalWidth * scale) + 'px';
+                    this.referenceImage.style.height = (this.referenceImage.naturalHeight * scale) + 'px';
+                    this.referenceImage.style.left = ((container.clientWidth - this.referenceImage.naturalWidth * scale) / 2) + 'px';
+                    this.referenceImage.style.top = ((container.clientHeight - this.referenceImage.naturalHeight * scale) / 2) + 'px';
+                }
+            }
+            
+            // Работа с проектами
+            saveToHistory() {
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                const snapshot = JSON.parse(JSON.stringify(this.shapes));
+                this.history.push(snapshot);
+                this.historyIndex++;
+            }
+            
+            newProject() {
+                if (confirm('Создать новый проект? Несохраненные изменения будут потеряны.')) {
+                    this.shapes = [];
+                    this.referenceImage.style.display = 'none';
+                    this.scale = 1;
+                    this.offsetX = 0;
+                    this.offsetY = 0;
+                    this.history = [];
+                    this.historyIndex = -1;
+                    this.render();
+                    this.hideModal('menuModal');
+                }
+            }
+            
+            saveProject() {
+                const levelName = document.getElementById('levelName').value || 'Мой уровень';
+                const author = document.getElementById('authorName').value || 'Аноним';
+                
+                const project = {
+                    name: levelName,
+                    author: author,
+                    shapes: this.shapes,
+                    image: this.referenceImage.src,
+                    metadata: {
+                        created: new Date().toISOString(),
+                        version: '1.0'
+                    }
+                };
+                
+                const data = JSON.stringify(project, null, 2);
+                this.downloadFile(data, levelName + '.json', 'application/json');
+                this.hideModal('saveModal');
+                
+                alert('Проект сохранен!');
+            }
+            
+            exportToGame() {
+                const levelName = document.getElementById('levelName').value || 'Мой уровень';
+                const author = document.getElementById('authorName').value || 'Аноним';
+                
+                const gameLevel = {
+                    title: levelName,
+                    author: author,
+                    background: '#1a1a2e',
+                    elements: this.shapes.map(shape => ({
+                        ...shape,
+                        // Добавляем игровые свойства
+                        health: shape.health || 1,
+                        effect: shape.effect || 'none'
+                    }))
+                };
+                
+                const data = JSON.stringify(gameLevel, null, 2);
+                this.downloadFile(data, levelName + '_game.json', 'application/json');
+                this.hideModal('saveModal');
+                
+                alert('Уровень экспортирован для игры!');
+            }
+            
+            loadProject() {
+                // Здесь можно добавить функциональность загрузки проектов
+                alert('Функция загрузки проектов будет добавлена в следующем обновлении!');
+            }
+            
+            clearCanvas() {
+                if (confirm('Очистить векторные фигуры?')) {
+                    this.saveToHistory();
+                    this.shapes = [];
+                    this.render();
+                    this.hideModal('menuModal');
+                }
+            }
+            
+            downloadFile(data, filename, type) {
+                const blob = new Blob([data], { type });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Инициализация редактора при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            new MobileVectorEditor();
+        });
+    </script>
 </body>
 </html>
