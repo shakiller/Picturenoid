@@ -17,6 +17,7 @@
             background: #1a1a2e;
             color: white;
             overflow: hidden;
+            touch-action: none;
         }
 
         .app-container {
@@ -105,10 +106,7 @@
             position: relative;
             background: #2d2d44;
             overflow: hidden;
-            background-image: 
-                linear-gradient(#333 1px, transparent 1px),
-                linear-gradient(90deg, #333 1px, transparent 1px);
-            background-size: 20px 20px;
+            touch-action: none;
         }
 
         #drawingCanvas {
@@ -118,6 +116,16 @@
             width: 100%;
             height: 100%;
             cursor: crosshair;
+        }
+
+        #referenceImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.5;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         /* Нижняя панель */
@@ -165,6 +173,17 @@
         .slider {
             width: 60px;
             height: 4px;
+            -webkit-appearance: none;
+            background: #0f3460;
+            border-radius: 2px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #e94560;
         }
 
         select {
@@ -184,9 +203,9 @@
             background: #00ffff;
             border: 2px solid #006666;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
             cursor: move;
             z-index: 1000;
+            transform: translate(-50%, -50%);
         }
 
         .control-handle {
@@ -196,9 +215,9 @@
             background: #ff00ff;
             border: 2px solid #660066;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
             cursor: pointer;
             z-index: 900;
+            transform: translate(-50%, -50%);
         }
 
         /* Модальные окна */
@@ -244,6 +263,32 @@
             justify-content: space-between;
             min-height: 30px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Зум контролы */
+        .zoom-controls {
+            position: absolute;
+            bottom: 60px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -251,12 +296,12 @@
     <div class="app-container">
         <!-- Верхняя панель -->
         <div class="top-bar">
-            <button class="btn btn-secondary" id="loadImageBtn">📁</button>
-            <button class="btn" id="saveBtn">💾</button>
-            <button class="btn btn-secondary" id="newBtn">🆕</button>
-            <button class="btn btn-secondary" id="copyBtn">📋</button>
-            <button class="btn btn-secondary" id="pasteBtn">📄</button>
-            <button class="btn btn-secondary" id="deleteBtn">🗑️</button>
+            <button class="btn btn-secondary" id="loadImageBtn">📁 Загрузить</button>
+            <button class="btn" id="saveBtn">💾 Сохранить</button>
+            <button class="btn btn-secondary" id="newBtn">🆕 Новый</button>
+            <button class="btn btn-secondary" id="copyBtn">📋 Копировать</button>
+            <button class="btn btn-secondary" id="pasteBtn">📄 Вставить</button>
+            <button class="btn btn-secondary" id="deleteBtn">🗑️ Удалить</button>
         </div>
 
         <!-- Основная область -->
@@ -276,7 +321,15 @@
 
             <!-- Область рисования -->
             <div class="canvas-container" id="canvasContainer">
+                <img id="referenceImage" style="display: none;">
                 <canvas id="drawingCanvas"></canvas>
+                
+                <!-- Контролы зума -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomInBtn">+</button>
+                    <button class="zoom-btn" id="zoomOutBtn">-</button>
+                    <button class="zoom-btn" id="resetZoomBtn">100%</button>
+                </div>
             </div>
 
             <!-- Нижняя панель -->
@@ -288,18 +341,24 @@
                         <div class="color" style="background: #00ff00;" data-color="#00ff00"></div>
                         <div class="color" style="background: #0000ff;" data-color="#0000ff"></div>
                         <div class="color" style="background: #ffff00;" data-color="#ffff00"></div>
+                        <div class="color" style="background: #ff00ff;" data-color="#ff00ff"></div>
                     </div>
                 </div>
 
                 <div class="property-group">
-                    <div class="property-label">Толщ:</div>
+                    <div class="property-label">Толщина:</div>
                     <input type="range" class="slider" id="strokeWidth" min="1" max="10" value="2">
-                    <span style="font-size: 11px;">2</span>
+                    <span id="widthValue" style="font-size: 11px;">2</span>
                 </div>
 
                 <div class="property-group">
-                    <div class="property-label">Удалить всё</div>
-                    <button class="btn" style="padding: 5px; font-size: 10px;" id="clearAllBtn">🗑️</button>
+                    <div class="property-label">Прозрачность:</div>
+                    <input type="range" class="slider" id="imageOpacity" min="0" max="100" value="50">
+                    <span id="opacityValue" style="font-size: 11px;">50%</span>
+                </div>
+
+                <div class="property-group">
+                    <button class="btn" style="padding: 6px; font-size: 11px;" id="clearAllBtn">Очистить всё</button>
                 </div>
             </div>
         </div>
@@ -309,17 +368,18 @@
             <span id="cursorPos">X:0 Y:0</span>
             <span id="toolInfo">Инструмент: Выделение</span>
             <span id="selectionInfo">Не выделено</span>
+            <span id="zoomInfo">Масштаб: 100%</span>
         </div>
     </div>
 
     <!-- Модальные окна -->
     <div class="modal" id="loadImageModal">
         <div class="modal-content">
-            <div style="text-align: center; margin-bottom: 15px; color: #e94560;">Загрузить изображение</div>
+            <div style="text-align: center; margin-bottom: 15px; color: #e94560; font-size: 16px;">Загрузить изображение</div>
             <input type="file" id="imageInput" class="file-input" accept="image/*">
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="document.getElementById('imageInput').click()">
-                    Выбрать
+                    Выбрать файл
                 </button>
                 <button class="btn" id="confirmLoadBtn">
                     Загрузить
@@ -337,11 +397,20 @@
                 this.canvas = document.getElementById('drawingCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.container = document.getElementById('canvasContainer');
+                this.referenceImage = document.getElementById('referenceImage');
                 
                 // Состояние редактора
                 this.currentTool = 'select';
                 this.currentColor = '#ff0000';
                 this.strokeWidth = 2;
+                this.imageOpacity = 0.5;
+                
+                // Трансформации
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.isPanning = false;
+                this.lastPanPoint = {x: 0, y: 0};
                 
                 // Данные
                 this.shapes = [];
@@ -402,10 +471,16 @@
                     });
                 });
                 
-                // Слайдер
+                // Слайдеры
                 document.getElementById('strokeWidth').addEventListener('input', (e) => {
                     this.strokeWidth = parseInt(e.target.value);
-                    e.target.nextElementSibling.textContent = this.strokeWidth;
+                    document.getElementById('widthValue').textContent = this.strokeWidth;
+                });
+                
+                document.getElementById('imageOpacity').addEventListener('input', (e) => {
+                    this.imageOpacity = parseInt(e.target.value) / 100;
+                    document.getElementById('opacityValue').textContent = e.target.value + '%';
+                    this.referenceImage.style.opacity = this.imageOpacity;
                 });
                 
                 // Кнопки
@@ -415,6 +490,11 @@
                 document.getElementById('deleteBtn').addEventListener('click', () => this.deleteShape());
                 document.getElementById('clearAllBtn').addEventListener('click', () => this.clearAll());
                 
+                // Зум
+                document.getElementById('zoomInBtn').addEventListener('click', () => this.zoom(1.2));
+                document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoom(0.8));
+                document.getElementById('resetZoomBtn').addEventListener('click', () => this.resetZoom());
+                
                 // События мыши и касания
                 this.canvas.addEventListener('mousedown', (e) => this.onPointerStart(e));
                 this.canvas.addEventListener('mousemove', (e) => this.onPointerMove(e));
@@ -423,6 +503,16 @@
                 this.canvas.addEventListener('touchstart', (e) => this.onPointerStart(e));
                 this.canvas.addEventListener('touchmove', (e) => this.onPointerMove(e));
                 this.canvas.addEventListener('touchend', (e) => this.onPointerEnd(e));
+                
+                // Колесо мыши для зума
+                this.canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.8 : 1.2;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.zoom(delta, x, y);
+                });
                 
                 // Обновление позиции курсора
                 this.canvas.addEventListener('mousemove', (e) => this.updateCursorPos(e));
@@ -441,6 +531,20 @@
                 document.getElementById('imageInput').addEventListener('change', (e) => this.handleImageSelect(e));
                 document.getElementById('confirmLoadBtn').addEventListener('click', () => this.loadSelectedImage());
                 document.getElementById('cancelLoadBtn').addEventListener('click', () => this.hideModal('loadImageModal'));
+            }
+            
+            getWorldPos(canvasPos) {
+                return {
+                    x: (canvasPos.x - this.offsetX) / this.scale,
+                    y: (canvasPos.y - this.offsetY) / this.scale
+                };
+            }
+            
+            getCanvasPos(worldPos) {
+                return {
+                    x: worldPos.x * this.scale + this.offsetX,
+                    y: worldPos.y * this.scale + this.offsetY
+                };
             }
             
             getPointerPos(e) {
@@ -463,19 +567,28 @@
             
             onPointerStart(e) {
                 e.preventDefault();
-                const pos = this.getPointerPos(e);
-                this.startPos = {...pos};
-                this.lastPos = {...pos};
+                const canvasPos = this.getPointerPos(e);
+                const worldPos = this.getWorldPos(canvasPos);
+                
+                this.startPos = {...worldPos};
+                this.lastPos = {...worldPos};
+                this.lastPanPoint = {...canvasPos};
+                
+                // Паннинг при зажатом пробеле или правой кнопке
+                if (e.button === 2 || e.ctrlKey) {
+                    this.isPanning = true;
+                    return;
+                }
                 
                 // Проверяем точки управления
-                const controlPoint = this.getControlPointAt(pos);
+                const controlPoint = this.getControlPointAt(canvasPos);
                 if (controlPoint) {
                     this.selectedPoint = controlPoint;
                     return;
                 }
                 
                 // Проверяем выделение фигуры
-                const shape = this.getShapeAt(pos);
+                const shape = this.getShapeAt(worldPos);
                 if (this.currentTool === 'select' || this.currentTool === 'move') {
                     this.selectedShape = shape;
                     this.clearControlPoints();
@@ -489,33 +602,37 @@
                 
                 // Удаление точки
                 if (this.currentTool === 'delete-point' && this.selectedShape) {
-                    this.deletePointAt(pos);
+                    this.deletePointAt(worldPos);
                     return;
                 }
                 
                 // Добавление точки
                 if (this.currentTool === 'add-point' && this.selectedShape) {
-                    this.addPointAt(pos);
+                    this.addPointAt(worldPos);
                     return;
                 }
                 
                 // Начинаем рисование новой фигуры
-                this.startNewShape(pos);
+                this.startNewShape(worldPos);
             }
             
             onPointerMove(e) {
                 e.preventDefault();
-                const pos = this.getPointerPos(e);
+                const canvasPos = this.getPointerPos(e);
+                const worldPos = this.getWorldPos(canvasPos);
                 
-                if (this.selectedPoint) {
-                    this.moveControlPoint(pos);
+                if (this.isPanning) {
+                    this.pan(canvasPos);
+                } else if (this.selectedPoint) {
+                    this.moveControlPoint(worldPos);
                 } else if (this.currentTool === 'move' && this.selectedShape && this.isDrawing) {
-                    this.moveShape(pos);
+                    this.moveShape(worldPos);
                 } else if (this.isDrawing && this.currentShape) {
-                    this.updateCurrentShape(pos);
+                    this.updateCurrentShape(worldPos);
                 }
                 
-                this.lastPos = {...pos};
+                this.lastPos = {...worldPos};
+                this.lastPanPoint = {...canvasPos};
                 this.render();
             }
             
@@ -525,21 +642,73 @@
                 }
                 this.selectedPoint = null;
                 this.isDrawing = false;
+                this.isPanning = false;
+            }
+            
+            pan(currentPos) {
+                const deltaX = currentPos.x - this.lastPanPoint.x;
+                const deltaY = currentPos.y - this.lastPanPoint.y;
+                
+                this.offsetX += deltaX;
+                this.offsetY += deltaY;
+                
+                this.updateControlPointsPosition();
+            }
+            
+            zoom(factor, centerX = null, centerY = null) {
+                const oldScale = this.scale;
+                this.scale *= factor;
+                this.scale = Math.max(0.1, Math.min(5, this.scale));
+                
+                if (centerX !== null && centerY !== null) {
+                    const worldX = (centerX - this.offsetX) / oldScale;
+                    const worldY = (centerY - this.offsetY) / oldScale;
+                    
+                    this.offsetX = centerX - worldX * this.scale;
+                    this.offsetY = centerY - worldY * this.scale;
+                }
+                
+                this.updateControlPointsPosition();
+                this.updateZoomInfo();
+                this.render();
+            }
+            
+            resetZoom() {
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.updateControlPointsPosition();
+                this.updateZoomInfo();
+                this.render();
+            }
+            
+            updateControlPointsPosition() {
+                this.controlPoints.forEach(point => {
+                    if (this.selectedShape) {
+                        const pointData = this.getPointFromShape(this.selectedShape, 
+                            parseInt(point.dataset.index), point.dataset.type);
+                        if (pointData) {
+                            const canvasPos = this.getCanvasPos(pointData);
+                            point.style.left = canvasPos.x + 'px';
+                            point.style.top = canvasPos.y + 'px';
+                        }
+                    }
+                });
             }
             
             // Создание фигур
-            startNewShape(pos) {
+            startNewShape(worldPos) {
                 this.currentShape = {
                     type: this.currentTool,
-                    points: [{x: pos.x, y: pos.y}],
+                    points: [{x: worldPos.x, y: worldPos.y}],
                     color: this.currentColor,
                     strokeWidth: this.strokeWidth,
                     id: Date.now()
                 };
                 
                 if (this.currentTool === 'rectangle' || this.currentTool === 'circle') {
-                    this.currentShape.x = pos.x;
-                    this.currentShape.y = pos.y;
+                    this.currentShape.x = worldPos.x;
+                    this.currentShape.y = worldPos.y;
                     this.currentShape.width = 0;
                     this.currentShape.height = 0;
                 }
@@ -547,41 +716,41 @@
                 this.isDrawing = true;
             }
             
-            updateCurrentShape(pos) {
+            updateCurrentShape(worldPos) {
                 if (!this.currentShape) return;
                 
                 switch (this.currentShape.type) {
                     case 'pen':
-                        this.currentShape.points.push({x: pos.x, y: pos.y});
+                        this.currentShape.points.push({x: worldPos.x, y: worldPos.y});
                         break;
                     case 'line':
                         if (this.currentShape.points.length === 1) {
-                            this.currentShape.points.push({x: pos.x, y: pos.y});
+                            this.currentShape.points.push({x: worldPos.x, y: worldPos.y});
                         } else {
-                            this.currentShape.points[1] = {x: pos.x, y: pos.y};
+                            this.currentShape.points[1] = {x: worldPos.x, y: worldPos.y};
                         }
                         break;
                     case 'rectangle':
-                        this.currentShape.width = pos.x - this.currentShape.x;
-                        this.currentShape.height = pos.y - this.currentShape.y;
+                        this.currentShape.width = worldPos.x - this.currentShape.x;
+                        this.currentShape.height = worldPos.y - this.currentShape.y;
                         break;
                     case 'circle':
                         const radius = Math.sqrt(
-                            Math.pow(pos.x - this.currentShape.x, 2) + 
-                            Math.pow(pos.y - this.currentShape.y, 2)
+                            Math.pow(worldPos.x - this.currentShape.x, 2) + 
+                            Math.pow(worldPos.y - this.currentShape.y, 2)
                         );
                         this.currentShape.radius = radius;
                         break;
                     case 'bezier':
                         if (this.currentShape.points.length === 1) {
-                            this.currentShape.points.push({x: pos.x, y: pos.y});
+                            this.currentShape.points.push({x: worldPos.x, y: worldPos.y});
                             // Добавляем контрольные точки
                             this.currentShape.controlPoints = [
-                                {x: (this.currentShape.points[0].x + pos.x) / 2, y: this.currentShape.points[0].y},
-                                {x: (this.currentShape.points[0].x + pos.x) / 2, y: pos.y}
+                                {x: (this.currentShape.points[0].x + worldPos.x) / 2, y: this.currentShape.points[0].y},
+                                {x: (this.currentShape.points[0].x + worldPos.x) / 2, y: worldPos.y}
                             ];
                         } else {
-                            this.currentShape.points[1] = {x: pos.x, y: pos.y};
+                            this.currentShape.points[1] = {x: worldPos.x, y: worldPos.y};
                         }
                         break;
                 }
@@ -676,11 +845,12 @@
                 }
             }
             
-            createControlPoint(point, type, index) {
+            createControlPoint(worldPos, type, index) {
                 const div = document.createElement('div');
                 div.className = type === 'handle' ? 'control-handle' : 'control-point';
-                div.style.left = point.x + 'px';
-                div.style.top = point.y + 'px';
+                const canvasPos = this.getCanvasPos(worldPos);
+                div.style.left = canvasPos.x + 'px';
+                div.style.top = canvasPos.y + 'px';
                 div.dataset.type = type;
                 div.dataset.index = index;
                 
@@ -693,15 +863,15 @@
                 this.controlPoints = [];
             }
             
-            getControlPointAt(pos) {
+            getControlPointAt(canvasPos) {
                 for (let point of this.controlPoints) {
                     const rect = point.getBoundingClientRect();
                     const pointX = rect.left + rect.width / 2;
                     const pointY = rect.top + rect.height / 2;
                     
                     const distance = Math.sqrt(
-                        Math.pow(pos.x - pointX, 2) +
-                        Math.pow(pos.y - pointY, 2)
+                        Math.pow(canvasPos.x - pointX, 2) +
+                        Math.pow(canvasPos.y - pointY, 2)
                     );
                     
                     if (distance < 20) {
@@ -715,85 +885,118 @@
                 return null;
             }
             
-            moveControlPoint(pos) {
-                if (!this.selectedPoint || !this.selectedShape) return;
+            getPointFromShape(shape, index, type) {
+                if (!shape) return null;
                 
-                // Обновляем позицию элемента
-                this.selectedPoint.element.style.left = pos.x + 'px';
-                this.selectedPoint.element.style.top = pos.y + 'px';
+                switch (shape.type) {
+                    case 'rectangle':
+                        const rectPoints = [
+                            {x: shape.x, y: shape.y},
+                            {x: shape.x + shape.width, y: shape.y},
+                            {x: shape.x + shape.width, y: shape.y + shape.height},
+                            {x: shape.x, y: shape.y + shape.height}
+                        ];
+                        return rectPoints[index];
+                    case 'circle':
+                        const circlePoints = [
+                            {x: shape.x - shape.radius, y: shape.y},
+                            {x: shape.x + shape.radius, y: shape.y},
+                            {x: shape.x, y: shape.y - shape.radius},
+                            {x: shape.x, y: shape.y + shape.radius}
+                        ];
+                        return circlePoints[index];
+                    case 'line':
+                    case 'pen':
+                    case 'bezier':
+                        if (type === 'vertex') {
+                            return shape.points[index];
+                        } else if (type === 'handle') {
+                            return shape.controlPoints[index];
+                        }
+                }
+                return null;
+            }
+            
+            moveControlPoint(worldPos) {
+                if (!this.selectedPoint || !this.selectedShape) return;
                 
                 // Обновляем данные фигуры
                 switch (this.selectedShape.type) {
                     case 'rectangle':
-                        this.moveRectanglePoint(pos);
+                        this.moveRectanglePoint(worldPos);
                         break;
                     case 'circle':
-                        this.moveCirclePoint(pos);
+                        this.moveCirclePoint(worldPos);
                         break;
                     case 'line':
                     case 'pen':
                     case 'bezier':
-                        this.movePathPoint(pos);
+                        this.movePathPoint(worldPos);
                         break;
                 }
+                
+                // Обновляем позицию элемента
+                const canvasPos = this.getCanvasPos(worldPos);
+                this.selectedPoint.element.style.left = canvasPos.x + 'px';
+                this.selectedPoint.element.style.top = canvasPos.y + 'px';
             }
             
-            moveRectanglePoint(pos) {
+            moveRectanglePoint(worldPos) {
                 switch (this.selectedPoint.index) {
                     case 0: // левый верхний
-                        this.selectedShape.width += this.selectedShape.x - pos.x;
-                        this.selectedShape.height += this.selectedShape.y - pos.y;
-                        this.selectedShape.x = pos.x;
-                        this.selectedShape.y = pos.y;
+                        this.selectedShape.width += this.selectedShape.x - worldPos.x;
+                        this.selectedShape.height += this.selectedShape.y - worldPos.y;
+                        this.selectedShape.x = worldPos.x;
+                        this.selectedShape.y = worldPos.y;
                         break;
                     case 1: // правый верхний
-                        this.selectedShape.width = pos.x - this.selectedShape.x;
-                        this.selectedShape.height += this.selectedShape.y - pos.y;
-                        this.selectedShape.y = pos.y;
+                        this.selectedShape.width = worldPos.x - this.selectedShape.x;
+                        this.selectedShape.height += this.selectedShape.y - worldPos.y;
+                        this.selectedShape.y = worldPos.y;
                         break;
                     case 2: // правый нижний
-                        this.selectedShape.width = pos.x - this.selectedShape.x;
-                        this.selectedShape.height = pos.y - this.selectedShape.y;
+                        this.selectedShape.width = worldPos.x - this.selectedShape.x;
+                        this.selectedShape.height = worldPos.y - this.selectedShape.y;
                         break;
                     case 3: // левый нижний
-                        this.selectedShape.width += this.selectedShape.x - pos.x;
-                        this.selectedShape.height = pos.y - this.selectedShape.y;
-                        this.selectedShape.x = pos.x;
+                        this.selectedShape.width += this.selectedShape.x - worldPos.x;
+                        this.selectedShape.height = worldPos.y - this.selectedShape.y;
+                        this.selectedShape.x = worldPos.x;
                         break;
                 }
             }
             
-            moveCirclePoint(pos) {
+            moveCirclePoint(worldPos) {
                 switch (this.selectedPoint.index) {
                     case 0: // левая
-                        this.selectedShape.radius = this.selectedShape.x - pos.x;
+                        this.selectedShape.radius = this.selectedShape.x - worldPos.x;
                         break;
                     case 1: // правая
-                        this.selectedShape.radius = pos.x - this.selectedShape.x;
+                        this.selectedShape.radius = worldPos.x - this.selectedShape.x;
                         break;
                     case 2: // верхняя
-                        this.selectedShape.radius = this.selectedShape.y - pos.y;
+                        this.selectedShape.radius = this.selectedShape.y - worldPos.y;
                         break;
                     case 3: // нижняя
-                        this.selectedShape.radius = pos.y - this.selectedShape.y;
+                        this.selectedShape.radius = worldPos.y - this.selectedShape.y;
                         break;
                 }
                 this.selectedShape.radius = Math.abs(this.selectedShape.radius);
             }
             
-            movePathPoint(pos) {
+            movePathPoint(worldPos) {
                 if (this.selectedPoint.type === 'vertex') {
-                    this.selectedShape.points[this.selectedPoint.index] = {x: pos.x, y: pos.y};
+                    this.selectedShape.points[this.selectedPoint.index] = {x: worldPos.x, y: worldPos.y};
                 } else if (this.selectedPoint.type === 'handle') {
-                    this.selectedShape.controlPoints[this.selectedPoint.index] = {x: pos.x, y: pos.y};
+                    this.selectedShape.controlPoints[this.selectedPoint.index] = {x: worldPos.x, y: worldPos.y};
                 }
             }
             
-            moveShape(pos) {
+            moveShape(worldPos) {
                 if (!this.selectedShape) return;
                 
-                const deltaX = pos.x - this.lastPos.x;
-                const deltaY = pos.y - this.lastPos.y;
+                const deltaX = worldPos.x - this.lastPos.x;
+                const deltaY = worldPos.y - this.lastPos.y;
                 
                 switch (this.selectedShape.type) {
                     case 'rectangle':
@@ -825,7 +1028,7 @@
                 this.createControlPoints(this.selectedShape);
             }
             
-            addPointAt(pos) {
+            addPointAt(worldPos) {
                 if (!this.selectedShape || !this.selectedShape.points) return;
                 
                 // Находим ближайший сегмент
@@ -835,7 +1038,7 @@
                 for (let i = 0; i < this.selectedShape.points.length - 1; i++) {
                     const p1 = this.selectedShape.points[i];
                     const p2 = this.selectedShape.points[i + 1];
-                    const distance = this.pointToLineDistance(pos, p1, p2);
+                    const distance = this.pointToLineDistance(worldPos, p1, p2);
                     
                     if (distance < minDistance && distance < 20) {
                         minDistance = distance;
@@ -844,18 +1047,18 @@
                 }
                 
                 if (insertIndex <= this.selectedShape.points.length) {
-                    this.selectedShape.points.splice(insertIndex, 0, {x: pos.x, y: pos.y});
+                    this.selectedShape.points.splice(insertIndex, 0, {x: worldPos.x, y: worldPos.y});
                     this.clearControlPoints();
                     this.createControlPoints(this.selectedShape);
                 }
             }
             
-            deletePointAt(pos) {
+            deletePointAt(worldPos) {
                 if (!this.selectedShape || !this.selectedShape.points) return;
                 
                 for (let i = 0; i < this.selectedShape.points.length; i++) {
                     const point = this.selectedShape.points[i];
-                    const distance = Math.sqrt(Math.pow(pos.x - point.x, 2) + Math.pow(pos.y - point.y, 2));
+                    const distance = Math.sqrt(Math.pow(worldPos.x - point.x, 2) + Math.pow(worldPos.y - point.y, 2));
                     
                     if (distance < 10 && this.selectedShape.points.length > 2) {
                         this.selectedShape.points.splice(i, 1);
@@ -896,29 +1099,29 @@
                 return Math.sqrt(dx * dx + dy * dy);
             }
             
-            getShapeAt(pos) {
+            getShapeAt(worldPos) {
                 for (let i = this.shapes.length - 1; i >= 0; i--) {
                     const shape = this.shapes[i];
-                    if (this.isPointInShape(pos, shape)) {
+                    if (this.isPointInShape(worldPos, shape)) {
                         return shape;
                     }
                 }
                 return null;
             }
             
-            isPointInShape(pos, shape) {
+            isPointInShape(worldPos, shape) {
                 switch (shape.type) {
                     case 'rectangle':
-                        return pos.x >= shape.x && pos.x <= shape.x + shape.width &&
-                               pos.y >= shape.y && pos.y <= shape.y + shape.height;
+                        return worldPos.x >= shape.x && worldPos.x <= shape.x + shape.width &&
+                               worldPos.y >= shape.y && worldPos.y <= shape.y + shape.height;
                     case 'circle':
-                        return Math.sqrt(Math.pow(pos.x - shape.x, 2) + Math.pow(pos.y - shape.y, 2)) <= shape.radius;
+                        return Math.sqrt(Math.pow(worldPos.x - shape.x, 2) + Math.pow(worldPos.y - shape.y, 2)) <= shape.radius;
                     case 'line':
                     case 'pen':
                     case 'bezier':
                         const bounds = this.getShapeBounds(shape);
-                        return pos.x >= bounds.x && pos.x <= bounds.x + bounds.width &&
-                               pos.y >= bounds.y && pos.y <= bounds.y + bounds.height;
+                        return worldPos.x >= bounds.x && worldPos.x <= bounds.x + bounds.width &&
+                               worldPos.y >= bounds.y && worldPos.y <= bounds.y + bounds.height;
                 }
                 return false;
             }
@@ -966,6 +1169,7 @@
             copyShape() {
                 if (this.selectedShape) {
                     this.clipboard = JSON.parse(JSON.stringify(this.selectedShape));
+                    alert('Фигура скопирована!');
                 }
             }
             
@@ -1024,6 +1228,7 @@
                     this.shapes = [];
                     this.selectedShape = null;
                     this.clearControlPoints();
+                    this.referenceImage.style.display = 'none';
                     this.updateSelectionInfo();
                     this.render();
                 }
@@ -1031,7 +1236,14 @@
             
             // Рендеринг
             render() {
+                this.ctx.save();
+                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.restore();
+                
+                this.ctx.save();
+                this.ctx.translate(this.offsetX, this.offsetY);
+                this.ctx.scale(this.scale, this.scale);
                 
                 // Рендерим фигуры
                 this.shapes.forEach(shape => {
@@ -1047,6 +1259,8 @@
                 if (this.selectedShape) {
                     this.drawSelection(this.selectedShape);
                 }
+                
+                this.ctx.restore();
             }
             
             drawShape(shape) {
@@ -1146,7 +1360,7 @@
                     'add-point': 'Добавить точку',
                     'delete-point': 'Удалить точку'
                 };
-                document.getElementById('toolInfo').textContent = toolNames[this.currentTool];
+                document.getElementById('toolInfo').textContent = 'Инструмент: ' + toolNames[this.currentTool];
             }
             
             updateSelectionInfo() {
@@ -1154,24 +1368,67 @@
                     this.selectedShape ? 'Выделено' : 'Не выделено';
             }
             
+            updateZoomInfo() {
+                document.getElementById('zoomInfo').textContent = 'Масштаб: ' + Math.round(this.scale * 100) + '%';
+            }
+            
             updateCursorPos(e) {
-                const pos = this.getPointerPos(e);
-                document.getElementById('cursorPos').textContent = `X:${Math.round(pos.x)} Y:${Math.round(pos.y)}`;
+                const canvasPos = this.getPointerPos(e);
+                const worldPos = this.getWorldPos(canvasPos);
+                document.getElementById('cursorPos').textContent = 
+                    `X:${Math.round(worldPos.x)} Y:${Math.round(worldPos.y)}`;
             }
             
             // Файловые операции
             handleImageSelect(e) {
-                // Заглушка для загрузки изображений
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        this.selectedImageData = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
             
             loadSelectedImage() {
-                // Заглушка
-                this.hideModal('loadImageModal');
+                if (this.selectedImageData) {
+                    this.referenceImage.src = this.selectedImageData;
+                    this.referenceImage.style.display = 'block';
+                    this.referenceImage.style.opacity = this.imageOpacity;
+                    
+                    // Центрируем изображение
+                    this.referenceImage.onload = () => {
+                        const imgAspect = this.referenceImage.naturalWidth / this.referenceImage.naturalHeight;
+                        const canvasAspect = this.canvas.width / this.canvas.height;
+                        
+                        let displayWidth, displayHeight;
+                        
+                        if (imgAspect > canvasAspect) {
+                            displayWidth = this.canvas.width;
+                            displayHeight = this.canvas.width / imgAspect;
+                        } else {
+                            displayHeight = this.canvas.height;
+                            displayWidth = this.canvas.height * imgAspect;
+                        }
+                        
+                        this.referenceImage.style.width = displayWidth + 'px';
+                        this.referenceImage.style.height = displayHeight + 'px';
+                        this.referenceImage.style.left = ((this.canvas.width - displayWidth) / 2) + 'px';
+                        this.referenceImage.style.top = ((this.canvas.height - displayHeight) / 2) + 'px';
+                    };
+                    
+                    this.hideModal('loadImageModal');
+                    this.render();
+                } else {
+                    alert('Сначала выберите файл!');
+                }
             }
             
             saveProject() {
                 const project = {
                     shapes: this.shapes,
+                    image: this.referenceImage.src,
                     timestamp: new Date().toISOString()
                 };
                 
@@ -1200,6 +1457,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             new VectorEditor();
         });
+
+        // Блокируем контекстное меню
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
     </script>
 </body>
 </html>
