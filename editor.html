@@ -193,31 +193,74 @@
             font-size: 12px;
         }
 
-        /* Точки управления */
+        /* Точки управления - СДЕЛАЕМ ИХ БОЛЬШЕ И ЯРЧЕ */
         .control-point {
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             background: #00ffff;
-            border: 2px solid #006666;
+            border: 3px solid #006666;
             border-radius: 50%;
             cursor: move;
             z-index: 1000;
             transform: translate(-50%, -50%);
             touch-action: none;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .control-point:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
+        }
+
+        .control-point.active {
+            background: #ffff00;
+            border-color: #ff6600;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 1);
         }
 
         .control-handle {
             position: absolute;
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             background: #ff00ff;
-            border: 2px solid #660066;
+            border: 3px solid #660066;
             border-radius: 50%;
             cursor: pointer;
             z-index: 900;
             transform: translate(-50%, -50%);
             touch-action: none;
+            box-shadow: 0 0 6px rgba(255, 0, 255, 0.8);
+        }
+
+        .control-handle:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 1);
+        }
+
+        /* Линии для контрольных точек Безье */
+        .control-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(255, 0, 255, 0.6);
+            transform-origin: 0 0;
+            pointer-events: none;
+            z-index: 800;
+        }
+
+        /* Подсветка выбранной точки */
+        .point-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1100;
+            pointer-events: none;
+            transform: translate(10px, -50%);
         }
 
         /* Модальные окна */
@@ -322,7 +365,6 @@
             <!-- Область рисования -->
             <div class="canvas-container" id="canvasContainer">
                 <canvas id="drawingCanvas"></canvas>
-                <!-- Референсная картинка будет добавлена динамически -->
                 
                 <!-- Контролы зума -->
                 <div class="zoom-controls">
@@ -427,12 +469,15 @@
                 this.selectedShape = null;
                 this.clipboard = null;
                 this.controlPoints = [];
+                this.controlLines = [];
+                this.pointLabels = [];
                 
                 // Временные данные
                 this.isDrawing = false;
                 this.startPos = {x: 0, y: 0};
                 this.lastPos = {x: 0, y: 0};
                 this.selectedPoint = null;
+                this.hoveredPoint = null;
                 
                 this.init();
             }
@@ -594,6 +639,7 @@
                 const controlPoint = this.getControlPointAt(canvasPos);
                 if (controlPoint) {
                     this.selectedPoint = controlPoint;
+                    this.setActivePoint(controlPoint.element);
                     this.isDrawing = true;
                     return;
                 }
@@ -636,6 +682,9 @@
                 const canvasPos = this.getPointerPos(e);
                 const worldPos = this.getWorldPos(canvasPos);
                 
+                // Обновляем ховер точки
+                this.updateHoveredPoint(canvasPos);
+                
                 if (this.isPanning) {
                     this.pan(canvasPos);
                 } else if (this.selectedPoint) {
@@ -656,8 +705,53 @@
                     this.finalizeShape();
                 }
                 this.selectedPoint = null;
+                this.clearActivePoint();
                 this.isDrawing = false;
                 this.isPanning = false;
+            }
+            
+            updateHoveredPoint(canvasPos) {
+                const controlPoint = this.getControlPointAt(canvasPos);
+                
+                // Убираем ховер со всех точек
+                this.controlPoints.forEach(point => {
+                    point.classList.remove('hover');
+                });
+                
+                // Добавляем ховер на найденную точку
+                if (controlPoint) {
+                    controlPoint.element.classList.add('hover');
+                }
+            }
+            
+            setActivePoint(element) {
+                this.clearActivePoint();
+                element.classList.add('active');
+                
+                // Показываем подпись для точки
+                const index = parseInt(element.dataset.index);
+                const type = element.dataset.type;
+                const canvasPos = {
+                    x: parseFloat(element.style.left),
+                    y: parseFloat(element.style.top)
+                };
+                
+                const label = document.createElement('div');
+                label.className = 'point-label';
+                label.textContent = `${type === 'vertex' ? 'Точка' : 'Контрольная'} ${index + 1}`;
+                label.style.left = canvasPos.x + 'px';
+                label.style.top = canvasPos.y + 'px';
+                
+                this.container.appendChild(label);
+                this.pointLabels.push(label);
+            }
+            
+            clearActivePoint() {
+                this.controlPoints.forEach(point => {
+                    point.classList.remove('active');
+                });
+                this.pointLabels.forEach(label => label.remove());
+                this.pointLabels = [];
             }
             
             pan(currentPos) {
@@ -717,6 +811,22 @@
                             point.style.left = canvasPos.x + 'px';
                             point.style.top = canvasPos.y + 'px';
                         }
+                    }
+                });
+                
+                // Обновляем линии контроля
+                this.updateControlLines();
+                
+                // Обновляем подписи
+                this.pointLabels.forEach(label => {
+                    const point = this.controlPoints.find(p => 
+                        p.classList.contains('active') && 
+                        p.style.left === label.style.left && 
+                        p.style.top === label.style.top
+                    );
+                    if (point) {
+                        label.style.left = point.style.left;
+                        label.style.top = point.style.top;
                     }
                 });
             }
@@ -830,49 +940,52 @@
                         this.createPathPoints(shape);
                         break;
                 }
+                
+                // Создаем линии для контрольных точек
+                this.createControlLines(shape);
             }
             
             createRectanglePoints(shape) {
                 const points = [
-                    {x: shape.x, y: shape.y},
-                    {x: shape.x + shape.width, y: shape.y},
-                    {x: shape.x + shape.width, y: shape.y + shape.height},
-                    {x: shape.x, y: shape.y + shape.height}
+                    {x: shape.x, y: shape.y, label: 'Левый верхний'},
+                    {x: shape.x + shape.width, y: shape.y, label: 'Правый верхний'},
+                    {x: shape.x + shape.width, y: shape.y + shape.height, label: 'Правый нижний'},
+                    {x: shape.x, y: shape.y + shape.height, label: 'Левый нижний'}
                 ];
                 
                 points.forEach((point, index) => {
-                    this.createControlPoint(point, 'vertex', index);
+                    this.createControlPoint(point, 'vertex', index, point.label);
                 });
             }
             
             createCirclePoints(shape) {
                 const points = [
-                    {x: shape.x - shape.radius, y: shape.y},
-                    {x: shape.x + shape.radius, y: shape.y},
-                    {x: shape.x, y: shape.y - shape.radius},
-                    {x: shape.x, y: shape.y + shape.radius}
+                    {x: shape.x - shape.radius, y: shape.y, label: 'Левая'},
+                    {x: shape.x + shape.radius, y: shape.y, label: 'Правая'},
+                    {x: shape.x, y: shape.y - shape.radius, label: 'Верхняя'},
+                    {x: shape.x, y: shape.y + shape.radius, label: 'Нижняя'}
                 ];
                 
                 points.forEach((point, index) => {
-                    this.createControlPoint(point, 'radius', index);
+                    this.createControlPoint(point, 'radius', index, point.label);
                 });
             }
             
             createPathPoints(shape) {
                 if (shape.points) {
                     shape.points.forEach((point, index) => {
-                        this.createControlPoint(point, 'vertex', index);
+                        this.createControlPoint(point, 'vertex', index, `Точка ${index + 1}`);
                     });
                 }
                 
                 if (shape.controlPoints) {
                     shape.controlPoints.forEach((point, index) => {
-                        this.createControlPoint(point, 'handle', index);
+                        this.createControlPoint(point, 'handle', index, `Контрольная ${index + 1}`);
                     });
                 }
             }
             
-            createControlPoint(worldPos, type, index) {
+            createControlPoint(worldPos, type, index, label = '') {
                 const div = document.createElement('div');
                 div.className = type === 'handle' ? 'control-handle' : 'control-point';
                 const canvasPos = this.getCanvasPos(worldPos);
@@ -880,6 +993,8 @@
                 div.style.top = canvasPos.y + 'px';
                 div.dataset.type = type;
                 div.dataset.index = index;
+                div.dataset.label = label;
+                div.title = label;
                 
                 // Добавляем обработчики событий для точек
                 div.addEventListener('mousedown', (e) => {
@@ -889,6 +1004,7 @@
                         type: type,
                         index: index
                     };
+                    this.setActivePoint(div);
                     this.isDrawing = true;
                 });
                 
@@ -899,6 +1015,7 @@
                         type: type,
                         index: index
                     };
+                    this.setActivePoint(div);
                     this.isDrawing = true;
                 });
                 
@@ -906,11 +1023,62 @@
                 this.controlPoints.push(div);
             }
             
+            createControlLines(shape) {
+                if (shape.type === 'bezier' && shape.controlPoints && shape.points) {
+                    // Линия от первой точки к первой контрольной точке
+                    if (shape.points[0] && shape.controlPoints[0]) {
+                        this.createControlLine(shape.points[0], shape.controlPoints[0]);
+                    }
+                    
+                    // Линия от второй точки ко второй контрольной точке
+                    if (shape.points[1] && shape.controlPoints[1]) {
+                        this.createControlLine(shape.points[1], shape.controlPoints[1]);
+                    }
+                }
+            }
+            
+            createControlLine(startWorld, endWorld) {
+                const startCanvas = this.getCanvasPos(startWorld);
+                const endCanvas = this.getCanvasPos(endWorld);
+                
+                const line = document.createElement('div');
+                line.className = 'control-line';
+                
+                const dx = endCanvas.x - startCanvas.x;
+                const dy = endCanvas.y - startCanvas.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                line.style.left = startCanvas.x + 'px';
+                line.style.top = startCanvas.y + 'px';
+                line.style.width = length + 'px';
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                this.container.appendChild(line);
+                this.controlLines.push(line);
+            }
+            
+            updateControlLines() {
+                this.controlLines.forEach(line => line.remove());
+                this.controlLines = [];
+                
+                if (this.selectedShape && this.selectedShape.type === 'bezier') {
+                    this.createControlLines(this.selectedShape);
+                }
+            }
+            
             clearControlPoints() {
                 this.controlPoints.forEach(point => {
                     point.remove();
                 });
                 this.controlPoints = [];
+                
+                this.controlLines.forEach(line => {
+                    line.remove();
+                });
+                this.controlLines = [];
+                
+                this.clearActivePoint();
             }
             
             getControlPointAt(canvasPos) {
@@ -924,11 +1092,12 @@
                         Math.pow(canvasPos.y - pointY, 2)
                     );
                     
-                    if (distance < 25) { // Увеличили радиус захвата
+                    if (distance < 30) { // Большой радиус захвата для удобства
                         return {
                             element: point,
                             type: point.dataset.type,
-                            index: parseInt(point.dataset.index)
+                            index: parseInt(point.dataset.index),
+                            label: point.dataset.label
                         };
                     }
                 }
@@ -997,8 +1166,22 @@
                     this.selectedPoint.element.style.left = canvasPos.x + 'px';
                     this.selectedPoint.element.style.top = canvasPos.y + 'px';
                     
+                    // Обновляем подпись
+                    this.updatePointLabel();
+                    
+                    // Обновляем линии контроля
+                    this.updateControlLines();
+                    
                 } catch (error) {
                     console.error('Error moving control point:', error);
+                }
+            }
+            
+            updatePointLabel() {
+                if (this.selectedPoint && this.pointLabels.length > 0) {
+                    const label = this.pointLabels[0];
+                    label.style.left = this.selectedPoint.element.style.left;
+                    label.style.top = this.selectedPoint.element.style.top;
                 }
             }
             
