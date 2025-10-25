@@ -107,6 +107,10 @@
             background: #2d2d44;
             overflow: hidden;
             touch-action: none;
+            background-image: 
+                linear-gradient(#333 1px, transparent 1px),
+                linear-gradient(90deg, #333 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
         #drawingCanvas {
@@ -193,7 +197,7 @@
             font-size: 12px;
         }
 
-        /* Точки управления - СДЕЛАЕМ ИХ БОЛЬШЕ И ЯРЧЕ */
+        /* Точки управления */
         .control-point {
             position: absolute;
             width: 20px;
@@ -261,6 +265,38 @@
             z-index: 1100;
             pointer-events: none;
             transform: translate(10px, -50%);
+        }
+
+        /* Сетка привязки */
+        .snap-guide {
+            position: absolute;
+            background: rgba(0, 255, 255, 0.3);
+            pointer-events: none;
+            z-index: 700;
+        }
+
+        .snap-guide.vertical {
+            width: 1px;
+            height: 100%;
+        }
+
+        .snap-guide.horizontal {
+            width: 100%;
+            height: 1px;
+        }
+
+        /* Координаты точки */
+        .point-coordinates {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            z-index: 1100;
+            pointer-events: none;
+            transform: translate(10px, 10px);
         }
 
         /* Модальные окна */
@@ -394,6 +430,15 @@
                 </div>
 
                 <div class="property-group">
+                    <div class="property-label">Привязка:</div>
+                    <select id="snapMode">
+                        <option value="grid">К сетке</option>
+                        <option value="points">К точкам</option>
+                        <option value="none">Нет</option>
+                    </select>
+                </div>
+
+                <div class="property-group">
                     <div class="property-label">Прозрачность:</div>
                     <input type="range" class="slider" id="imageOpacity" min="0" max="100" value="50">
                     <span id="opacityValue" style="font-size: 11px;">50%</span>
@@ -455,6 +500,8 @@
                 this.currentColor = '#ff0000';
                 this.strokeWidth = 2;
                 this.imageOpacity = 0.5;
+                this.snapMode = 'grid';
+                this.snapDistance = 10;
                 
                 // Трансформации
                 this.scale = 1;
@@ -471,6 +518,8 @@
                 this.controlPoints = [];
                 this.controlLines = [];
                 this.pointLabels = [];
+                this.snapGuides = [];
+                this.coordinateDisplay = null;
                 
                 // Временные данные
                 this.isDrawing = false;
@@ -478,6 +527,7 @@
                 this.lastPos = {x: 0, y: 0};
                 this.selectedPoint = null;
                 this.hoveredPoint = null;
+                this.isMovingPoint = false;
                 
                 this.init();
             }
@@ -536,6 +586,10 @@
                     this.imageOpacity = parseInt(e.target.value) / 100;
                     document.getElementById('opacityValue').textContent = e.target.value + '%';
                     this.referenceImage.style.opacity = this.imageOpacity;
+                });
+                
+                document.getElementById('snapMode').addEventListener('change', (e) => {
+                    this.snapMode = e.target.value;
                 });
                 
                 // Кнопки
@@ -620,6 +674,95 @@
                 };
             }
             
+            snapToGrid(worldPos) {
+                if (this.snapMode === 'none') return worldPos;
+                
+                const gridSize = 10;
+                let snappedX = Math.round(worldPos.x / gridSize) * gridSize;
+                let snappedY = Math.round(worldPos.y / gridSize) * gridSize;
+                
+                // Привязка к другим точкам
+                if (this.snapMode === 'points' && this.selectedShape) {
+                    const otherPoints = this.getAllPointsExceptCurrent();
+                    for (let point of otherPoints) {
+                        const dx = Math.abs(point.x - worldPos.x);
+                        const dy = Math.abs(point.y - worldPos.y);
+                        
+                        if (dx < this.snapDistance && dy < this.snapDistance) {
+                            snappedX = point.x;
+                            snappedY = point.y;
+                            this.showSnapGuides(point);
+                            break;
+                        }
+                    }
+                }
+                
+                return { x: snappedX, y: snappedY };
+            }
+            
+            getAllPointsExceptCurrent() {
+                const points = [];
+                
+                // Все точки всех фигур
+                this.shapes.forEach(shape => {
+                    if (shape !== this.selectedShape) {
+                        if (shape.points) {
+                            points.push(...shape.points);
+                        }
+                        if (shape.controlPoints) {
+                            points.push(...shape.controlPoints);
+                        }
+                    }
+                });
+                
+                // Точки текущей фигуры, кроме выбранной
+                if (this.selectedShape) {
+                    if (this.selectedShape.points) {
+                        this.selectedShape.points.forEach((point, index) => {
+                            if (!this.selectedPoint || this.selectedPoint.type !== 'vertex' || this.selectedPoint.index !== index) {
+                                points.push(point);
+                            }
+                        });
+                    }
+                    if (this.selectedShape.controlPoints) {
+                        this.selectedShape.controlPoints.forEach((point, index) => {
+                            if (!this.selectedPoint || this.selectedPoint.type !== 'handle' || this.selectedPoint.index !== index) {
+                                points.push(point);
+                            }
+                        });
+                    }
+                }
+                
+                return points;
+            }
+            
+            showSnapGuides(snapPoint) {
+                this.clearSnapGuides();
+                
+                const canvasPos = this.getCanvasPos(snapPoint);
+                
+                // Вертикальная направляющая
+                const vGuide = document.createElement('div');
+                vGuide.className = 'snap-guide vertical';
+                vGuide.style.left = canvasPos.x + 'px';
+                vGuide.style.top = '0';
+                this.container.appendChild(vGuide);
+                this.snapGuides.push(vGuide);
+                
+                // Горизонтальная направляющая
+                const hGuide = document.createElement('div');
+                hGuide.className = 'snap-guide horizontal';
+                hGuide.style.left = '0';
+                hGuide.style.top = canvasPos.y + 'px';
+                this.container.appendChild(hGuide);
+                this.snapGuides.push(hGuide);
+            }
+            
+            clearSnapGuides() {
+                this.snapGuides.forEach(guide => guide.remove());
+                this.snapGuides = [];
+            }
+            
             onPointerStart(e) {
                 e.preventDefault();
                 const canvasPos = this.getPointerPos(e);
@@ -640,6 +783,7 @@
                 if (controlPoint) {
                     this.selectedPoint = controlPoint;
                     this.setActivePoint(controlPoint.element);
+                    this.isMovingPoint = true;
                     this.isDrawing = true;
                     return;
                 }
@@ -681,18 +825,20 @@
                 e.preventDefault();
                 const canvasPos = this.getPointerPos(e);
                 const worldPos = this.getWorldPos(canvasPos);
+                const snappedPos = this.snapToGrid(worldPos);
                 
                 // Обновляем ховер точки
                 this.updateHoveredPoint(canvasPos);
                 
                 if (this.isPanning) {
                     this.pan(canvasPos);
-                } else if (this.selectedPoint) {
-                    this.moveControlPoint(worldPos);
+                } else if (this.isMovingPoint && this.selectedPoint) {
+                    this.moveControlPoint(snappedPos);
+                    this.updateCoordinateDisplay(snappedPos);
                 } else if (this.currentTool === 'move' && this.selectedShape && this.isDrawing) {
                     this.moveShape(worldPos);
                 } else if (this.isDrawing && this.currentShape) {
-                    this.updateCurrentShape(worldPos);
+                    this.updateCurrentShape(snappedPos);
                 }
                 
                 this.lastPos = {...worldPos};
@@ -705,7 +851,10 @@
                     this.finalizeShape();
                 }
                 this.selectedPoint = null;
+                this.isMovingPoint = false;
                 this.clearActivePoint();
+                this.clearSnapGuides();
+                this.clearCoordinateDisplay();
                 this.isDrawing = false;
                 this.isPanning = false;
             }
@@ -744,6 +893,35 @@
                 
                 this.container.appendChild(label);
                 this.pointLabels.push(label);
+                
+                // Создаем отображение координат
+                this.createCoordinateDisplay(canvasPos);
+            }
+            
+            createCoordinateDisplay(canvasPos) {
+                this.clearCoordinateDisplay();
+                
+                this.coordinateDisplay = document.createElement('div');
+                this.coordinateDisplay.className = 'point-coordinates';
+                this.coordinateDisplay.style.left = canvasPos.x + 'px';
+                this.coordinateDisplay.style.top = canvasPos.y + 'px';
+                this.container.appendChild(this.coordinateDisplay);
+            }
+            
+            updateCoordinateDisplay(worldPos) {
+                if (this.coordinateDisplay) {
+                    this.coordinateDisplay.textContent = `X:${Math.round(worldPos.x)} Y:${Math.round(worldPos.y)}`;
+                    const canvasPos = this.getCanvasPos(worldPos);
+                    this.coordinateDisplay.style.left = canvasPos.x + 'px';
+                    this.coordinateDisplay.style.top = canvasPos.y + 'px';
+                }
+            }
+            
+            clearCoordinateDisplay() {
+                if (this.coordinateDisplay) {
+                    this.coordinateDisplay.remove();
+                    this.coordinateDisplay = null;
+                }
             }
             
             clearActivePoint() {
@@ -833,17 +1011,19 @@
             
             // Создание фигур
             startNewShape(worldPos) {
+                const snappedPos = this.snapToGrid(worldPos);
+                
                 this.currentShape = {
                     type: this.currentTool,
-                    points: [{x: worldPos.x, y: worldPos.y}],
+                    points: [{x: snappedPos.x, y: snappedPos.y}],
                     color: this.currentColor,
                     strokeWidth: this.strokeWidth,
                     id: Date.now()
                 };
                 
                 if (this.currentTool === 'rectangle' || this.currentTool === 'circle') {
-                    this.currentShape.x = worldPos.x;
-                    this.currentShape.y = worldPos.y;
+                    this.currentShape.x = snappedPos.x;
+                    this.currentShape.y = snappedPos.y;
                     this.currentShape.width = 0;
                     this.currentShape.height = 0;
                 }
@@ -1005,6 +1185,7 @@
                         index: index
                     };
                     this.setActivePoint(div);
+                    this.isMovingPoint = true;
                     this.isDrawing = true;
                 });
                 
@@ -1016,6 +1197,7 @@
                         index: index
                     };
                     this.setActivePoint(div);
+                    this.isMovingPoint = true;
                     this.isDrawing = true;
                 });
                 
@@ -1079,6 +1261,8 @@
                 this.controlLines = [];
                 
                 this.clearActivePoint();
+                this.clearSnapGuides();
+                this.clearCoordinateDisplay();
             }
             
             getControlPointAt(canvasPos) {
@@ -1092,7 +1276,7 @@
                         Math.pow(canvasPos.y - pointY, 2)
                     );
                     
-                    if (distance < 30) { // Большой радиус захвата для удобства
+                    if (distance < 30) {
                         return {
                             element: point,
                             type: point.dataset.type,
