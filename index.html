@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Векторный Арканоид</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,7 +11,7 @@
         <div class="game-header">
             <h1>Векторный Арканоид</h1>
             <div class="controls">
-                <button id="loadDrawing">Загрузить рисунок</button>
+                <button id="loadDrawing">Загрузить</button>
                 <select id="drawingSelect">
                     <option value="">Выберите рисунок</option>
                 </select>
@@ -20,14 +20,26 @@
         </div>
         
         <div class="game-container">
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <canvas id="gameCanvas"></canvas>
         </div>
         
         <div class="game-info">
-            <div>Жизни: <span id="lives">3</span></div>
-            <div>Уровень: <span id="level">1</span></div>
-            <button id="startBtn">Начать игру</button>
-            <button id="pauseBtn">Пауза</button>
+            <div class="info-item">Жизни: <span id="lives">3</span></div>
+            <div class="info-item">Уровень: <span id="level">1</span></div>
+            <div class="button-group">
+                <button id="startBtn">Старт</button>
+                <button id="pauseBtn">Пауза</button>
+            </div>
+        </div>
+
+        <!-- Сенсорное управление -->
+        <div class="touch-controls">
+            <div class="touch-area left" id="leftBtn">
+                <span>←</span>
+            </div>
+            <div class="touch-area right" id="rightBtn">
+                <span>→</span>
+            </div>
         </div>
     </div>
 
