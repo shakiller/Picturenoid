@@ -262,14 +262,14 @@
             <div class="control-group">
                 <h2>⚙️ Настройки генерации</h2>
                 
-                <label>Размер блока: <span id="blockSizeValue" class="range-value">8</span>px</label>
-                <input type="range" id="blockSize" min="3" max="20" value="8">
+                <label>Размер блока: <span id="blockSizeValue" class="range-value">6</span>px</label>
+                <input type="range" id="blockSize" min="3" max="15" value="6">
                 
-                <label>Чувствительность фона: <span id="sensitivityValue" class="range-value">50</span></label>
-                <input type="range" id="sensitivity" min="1" max="100" value="50">
+                <label>Чувствительность фона: <span id="sensitivityValue" class="range-value">30</span></label>
+                <input type="range" id="sensitivity" min="1" max="100" value="30">
                 
-                <label>Объединение блоков: <span id="mergeValue" class="range-value">5</span></label>
-                <input type="range" id="mergeThreshold" min="1" max="20" value="5">
+                <label>Объединение блоков: <span id="mergeValue" class="range-value">3</span></label>
+                <input type="range" id="mergeThreshold" min="1" max="10" value="3">
                 
                 <div class="button-group">
                     <button id="generateLevel" disabled>Сгенерировать уровень</button>
@@ -308,15 +308,15 @@
                 this.jsonOutput = document.getElementById('jsonOutput');
                 
                 this.settings = {
-                    blockSize: 8,
-                    sensitivity: 50, // Процент похожести для определения фона
-                    mergeThreshold: 5
+                    blockSize: 6,
+                    sensitivity: 30, // Более строгая чувствительность
+                    mergeThreshold: 3
                 };
                 
                 this.currentImage = null;
                 this.blocks = [];
                 this.jsonData = null;
-                this.MAX_WIDTH = 400; // Увеличили до 400px
+                this.MAX_WIDTH = 400;
                 
                 this.init();
             }
@@ -470,7 +470,7 @@
                 this.processImage();
                 
                 const beforeMerge = this.blocks.length;
-                this.mergeBlocks();
+                this.mergeBlocksByColor();
                 const afterMerge = this.blocks.length;
                 
                 this.drawVectorPreview();
@@ -507,25 +507,34 @@
                 
                 console.log('Обработка изображения размером:', tempCanvas.width, 'x', tempCanvas.height);
                 
-                // Определяем цвет фона по краям изображения
+                // Определяем цвет фона по краям изображения (более точный метод)
                 const backgroundColor = this.detectBackgroundColor(data, tempCanvas.width, tempCanvas.height);
                 console.log('Определенный цвет фона:', backgroundColor);
                 
                 // Создаем карту для отслеживания обработанных пикселей
                 const processed = new Array(tempCanvas.width * tempCanvas.height).fill(false);
                 
-                // Сначала помечаем фон
-                this.markBackground(data, processed, backgroundColor, tempCanvas.width, tempCanvas.height);
+                // Только помечаем края как фон, не заливаем всю середину
+                this.markEdgeBackground(data, processed, backgroundColor, tempCanvas.width, tempCanvas.height);
                 
-                // Затем обрабатываем только значимые области
+                // Обрабатываем все пиксели, кроме помеченных как фон
                 for (let y = 0; y < tempCanvas.height; y += blockSize) {
                     for (let x = 0; x < tempCanvas.width; x += blockSize) {
                         if (processed[y * tempCanvas.width + x]) continue;
                         
-                        const region = this.findSignificantRegion(data, processed, x, y, tempCanvas.width, tempCanvas.height, backgroundColor);
+                        const pixelColor = this.getPixelColor(data, x, y, tempCanvas.width);
+                        const isBackground = this.isBackgroundColor(pixelColor, backgroundColor);
                         
-                        if (region.blocks.length > 0) {
-                            this.blocks.push(...region.blocks);
+                        if (!isBackground) {
+                            // Создаем блок для значимого пикселя
+                            this.blocks.push({
+                                x: Math.floor(x / blockSize) * blockSize,
+                                y: Math.floor(y / blockSize) * blockSize,
+                                width: blockSize,
+                                height: blockSize,
+                                color: pixelColor,
+                                health: 1
+                            });
                         }
                     }
                 }
@@ -534,28 +543,36 @@
             }
             
             detectBackgroundColor(data, width, height) {
-                // Берем пиксели с краев изображения для определения фона
+                // Более точное определение фона - берем только самые края
                 const edgePixels = [];
-                const sampleSize = 10;
+                const edgeSize = 2; // Только 2 пикселя от края
                 
-                // Верхняя граница
-                for (let x = 0; x < width; x += sampleSize) {
-                    edgePixels.push(this.getPixelColor(data, x, 0, width));
+                // Верхний край
+                for (let y = 0; y < edgeSize; y++) {
+                    for (let x = 0; x < width; x++) {
+                        edgePixels.push(this.getPixelColor(data, x, y, width));
+                    }
                 }
                 
-                // Нижняя граница
-                for (let x = 0; x < width; x += sampleSize) {
-                    edgePixels.push(this.getPixelColor(data, x, height - 1, width));
+                // Нижний край
+                for (let y = height - edgeSize; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        edgePixels.push(this.getPixelColor(data, x, y, width));
+                    }
                 }
                 
-                // Левая граница
-                for (let y = 0; y < height; y += sampleSize) {
-                    edgePixels.push(this.getPixelColor(data, 0, y, width));
+                // Левый край
+                for (let x = 0; x < edgeSize; x++) {
+                    for (let y = edgeSize; y < height - edgeSize; y++) {
+                        edgePixels.push(this.getPixelColor(data, x, y, width));
+                    }
                 }
                 
-                // Правая граница
-                for (let y = 0; y < height; y += sampleSize) {
-                    edgePixels.push(this.getPixelColor(data, width - 1, y, width));
+                // Правый край
+                for (let x = width - edgeSize; x < width; x++) {
+                    for (let y = edgeSize; y < height - edgeSize; y++) {
+                        edgePixels.push(this.getPixelColor(data, x, y, width));
+                    }
                 }
                 
                 // Находим наиболее часто встречающийся цвет
@@ -577,6 +594,72 @@
                 return backgroundColor;
             }
             
+            markEdgeBackground(data, processed, backgroundColor, width, height) {
+                const edgeSize = 5; // Только 5 пикселей от края
+                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
+                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
+                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
+                
+                // Помечаем только края, не заливаем середину
+                for (let y = 0; y < edgeSize; y++) {
+                    for (let x = 0; x < width; x++) {
+                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
+                            processed[y * width + x] = true;
+                        }
+                    }
+                }
+                
+                for (let y = height - edgeSize; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
+                            processed[y * width + x] = true;
+                        }
+                    }
+                }
+                
+                for (let x = 0; x < edgeSize; x++) {
+                    for (let y = edgeSize; y < height - edgeSize; y++) {
+                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
+                            processed[y * width + x] = true;
+                        }
+                    }
+                }
+                
+                for (let x = width - edgeSize; x < width; x++) {
+                    for (let y = edgeSize; y < height - edgeSize; y++) {
+                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
+                            processed[y * width + x] = true;
+                        }
+                    }
+                }
+            }
+            
+            isPixelBackground(data, x, y, width, bgR, bgG, bgB) {
+                const pixelColor = this.getPixelColor(data, x, y, width);
+                const pixelR = parseInt(pixelColor.substr(1, 2), 16);
+                const pixelG = parseInt(pixelColor.substr(3, 2), 16);
+                const pixelB = parseInt(pixelColor.substr(5, 2), 16);
+                
+                const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
+                const maxDiff = 765 * (this.settings.sensitivity / 100);
+                
+                return colorDiff <= maxDiff;
+            }
+            
+            isBackgroundColor(pixelColor, backgroundColor) {
+                const pixelR = parseInt(pixelColor.substr(1, 2), 16);
+                const pixelG = parseInt(pixelColor.substr(3, 2), 16);
+                const pixelB = parseInt(pixelColor.substr(5, 2), 16);
+                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
+                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
+                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
+                
+                const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
+                const maxDiff = 765 * (this.settings.sensitivity / 100);
+                
+                return colorDiff <= maxDiff;
+            }
+            
             getPixelColor(data, x, y, width) {
                 const index = (y * width + x) * 4;
                 const r = data[index];
@@ -585,170 +668,97 @@
                 return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
             }
             
-            markBackground(data, processed, backgroundColor, width, height) {
-                const stack = [];
-                const blockSize = this.settings.blockSize;
-                
-                // Добавляем края изображения в стек
-                for (let x = 0; x < width; x += blockSize) {
-                    stack.push([x, 0]); // Верхний край
-                    stack.push([x, height - 1]); // Нижний край
-                }
-                for (let y = 0; y < height; y += blockSize) {
-                    stack.push([0, y]); // Левый край
-                    stack.push([width - 1, y]); // Правый край
-                }
-                
-                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
-                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
-                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
-                
-                while (stack.length > 0) {
-                    const [x, y] = stack.pop();
-                    
-                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
-                    if (processed[y * width + x]) continue;
-                    
-                    const pixelColor = this.getPixelColor(data, x, y, width);
-                    const pixelR = parseInt(pixelColor.substr(1, 2), 16);
-                    const pixelG = parseInt(pixelColor.substr(3, 2), 16);
-                    const pixelB = parseInt(pixelColor.substr(5, 2), 16);
-                    
-                    // Проверяем похожесть цвета на фон
-                    const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
-                    const maxDiff = 765 * (this.settings.sensitivity / 100); // 765 - максимальная разница
-                    
-                    if (colorDiff <= maxDiff) {
-                        processed[y * width + x] = true;
-                        
-                        // Добавляем соседей
-                        stack.push([x + blockSize, y]);
-                        stack.push([x - blockSize, y]);
-                        stack.push([x, y + blockSize]);
-                        stack.push([x, y - blockSize]);
-                    }
-                }
-            }
-            
-            findSignificantRegion(data, processed, startX, startY, width, height, backgroundColor) {
-                const region = {
-                    blocks: [],
-                    color: null
-                };
-                
-                const blockSize = this.settings.blockSize;
-                const stack = [[startX, startY]];
-                let totalR = 0, totalG = 0, totalB = 0, pixelCount = 0;
-                
-                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
-                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
-                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
-                
-                while (stack.length > 0) {
-                    const [x, y] = stack.pop();
-                    
-                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
-                    if (processed[y * width + x]) continue;
-                    
-                    processed[y * width + x] = true;
-                    
-                    const pixelColor = this.getPixelColor(data, x, y, width);
-                    const pixelR = parseInt(pixelColor.substr(1, 2), 16);
-                    const pixelG = parseInt(pixelColor.substr(3, 2), 16);
-                    const pixelB = parseInt(pixelColor.substr(5, 2), 16);
-                    
-                    // Проверяем, что цвет отличается от фона
-                    const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
-                    const maxDiff = 765 * (this.settings.sensitivity / 100);
-                    
-                    if (colorDiff > maxDiff) {
-                        totalR += pixelR;
-                        totalG += pixelG;
-                        totalB += pixelB;
-                        pixelCount++;
-                        
-                        region.blocks.push({
-                            x: Math.floor(x / blockSize) * blockSize,
-                            y: Math.floor(y / blockSize) * blockSize,
-                            width: blockSize,
-                            height: blockSize,
-                            color: '#000000',
-                            health: 1
-                        });
-                        
-                        stack.push([x + blockSize, y]);
-                        stack.push([x - blockSize, y]);
-                        stack.push([x, y + blockSize]);
-                        stack.push([x, y - blockSize]);
-                    }
-                }
-                
-                if (pixelCount > 0) {
-                    const avgR = Math.round(totalR / pixelCount);
-                    const avgG = Math.round(totalG / pixelCount);
-                    const avgB = Math.round(totalB / pixelCount);
-                    region.color = `#${this.componentToHex(avgR)}${this.componentToHex(avgG)}${this.componentToHex(avgB)}`;
-                    
-                    region.blocks.forEach(block => {
-                        block.color = region.color;
-                    });
-                }
-                
-                return region;
-            }
-            
-            mergeBlocks() {
+            mergeBlocksByColor() {
                 if (this.blocks.length === 0) return;
                 
-                console.log('Начало объединения блоков...');
-                const mergedBlocks = [];
-                const merged = new Set();
+                console.log('Объединение блоков по цветам...');
                 
-                this.blocks.sort((a, b) => {
-                    if (a.y !== b.y) return a.y - b.y;
-                    return a.x - b.x;
+                // Группируем блоки по цвету
+                const blocksByColor = {};
+                this.blocks.forEach(block => {
+                    if (!blocksByColor[block.color]) {
+                        blocksByColor[block.color] = [];
+                    }
+                    blocksByColor[block.color].push(block);
                 });
                 
-                for (let i = 0; i < this.blocks.length; i++) {
-                    if (merged.has(i)) continue;
-                    
-                    const current = this.blocks[i];
-                    let mergedBlock = { ...current };
-                    
-                    for (let j = i + 1; j < this.blocks.length; j++) {
-                        if (merged.has(j)) continue;
-                        
-                        const candidate = this.blocks[j];
-                        
-                        if (this.canMerge(mergedBlock, candidate)) {
-                            mergedBlock = this.mergeTwoBlocks(mergedBlock, candidate);
-                            merged.add(j);
-                        }
-                    }
-                    
-                    mergedBlocks.push(mergedBlock);
-                    merged.add(i);
-                }
+                const mergedBlocks = [];
+                
+                // Объединяем блоки для каждого цвета отдельно
+                Object.values(blocksByColor).forEach(colorBlocks => {
+                    const mergedForColor = this.mergeColorBlocks(colorBlocks);
+                    mergedBlocks.push(...mergedForColor);
+                });
                 
                 this.blocks = mergedBlocks;
                 console.log('После объединения блоков:', this.blocks.length);
             }
             
-            canMerge(block1, block2) {
-                if (block1.color !== block2.color) return false;
+            mergeColorBlocks(blocks) {
+                if (blocks.length === 0) return [];
                 
-                const sameRow = block1.y === block2.y && 
-                               block1.height === block2.height &&
-                               (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
+                // Сортируем блоки по координатам
+                blocks.sort((a, b) => {
+                    if (a.y !== b.y) return a.y - b.y;
+                    return a.x - b.x;
+                });
                 
-                const sameCol = block1.x === block2.x && 
-                               block1.width === block2.width &&
-                               (block1.y + block1.height === block2.y || block2.y + block2.height === block1.y);
+                const merged = [];
+                const used = new Set();
                 
-                return sameRow || sameCol;
+                for (let i = 0; i < blocks.length; i++) {
+                    if (used.has(i)) continue;
+                    
+                    let currentBlock = blocks[i];
+                    used.add(i);
+                    
+                    // Пытаемся объединить с соседями в прямоугольник
+                    let changed;
+                    do {
+                        changed = false;
+                        
+                        for (let j = 0; j < blocks.length; j++) {
+                            if (used.has(j)) continue;
+                            
+                            const candidate = blocks[j];
+                            
+                            // Проверяем, можно ли объединить в прямоугольник
+                            if (this.canMergeToRectangle(currentBlock, candidate)) {
+                                currentBlock = this.mergeToRectangle(currentBlock, candidate);
+                                used.add(j);
+                                changed = true;
+                            }
+                        }
+                    } while (changed);
+                    
+                    merged.push(currentBlock);
+                }
+                
+                return merged;
             }
             
-            mergeTwoBlocks(block1, block2) {
+            canMergeToRectangle(block1, block2) {
+                // Проверяем, что блоки можно объединить в прямоугольник
+                const sameColor = block1.color === block2.color;
+                const sameWidth = block1.width === block2.width;
+                const sameHeight = block1.height === block2.height;
+                
+                if (!sameColor) return false;
+                
+                // Проверяем различные варианты расположения для создания прямоугольника
+                const horizontallyAligned = block1.y === block2.y && sameHeight;
+                const verticallyAligned = block1.x === block2.x && sameWidth;
+                
+                const horizontalMerge = horizontallyAligned && 
+                    (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
+                
+                const verticalMerge = verticallyAligned && 
+                    (block1.y + block1.height === block2.y || block2.y + block2.height === block1.y);
+                
+                return horizontalMerge || verticalMerge;
+            }
+            
+            mergeToRectangle(block1, block2) {
                 const minX = Math.min(block1.x, block2.x);
                 const minY = Math.min(block1.y, block2.y);
                 const maxX = Math.max(block1.x + block1.width, block2.x + block2.width);
