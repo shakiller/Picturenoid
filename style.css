@@ -101,7 +101,7 @@ select {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    margin-bottom: 80px; /* Место для сенсорного управления */
+    margin-bottom: 80px;
     flex-shrink: 0;
 }
 
@@ -128,7 +128,6 @@ select {
     background: #45b7af;
 }
 
-/* Сенсорное управление */
 .touch-controls {
     position: fixed;
     bottom: 20px;
@@ -165,7 +164,6 @@ select {
     pointer-events: none;
 }
 
-/* Адаптивность для разных размеров экрана */
 @media (max-width: 480px) {
     .container {
         padding: 5px;
@@ -212,7 +210,6 @@ select {
     }
 }
 
-/* Портретная ориентация */
 @media (orientation: portrait) and (max-height: 700px) {
     .game-header {
         margin-bottom: 5px;
@@ -230,7 +227,6 @@ select {
     }
 }
 
-/* Ландшафтная ориентация */
 @media (orientation: landscape) and (max-height: 500px) {
     .container {
         flex-direction: row;
@@ -266,7 +262,6 @@ select {
     }
 }
 
-/* Предотвращение zoom при двойном тапе */
 @media (hover: none) and (pointer: coarse) {
     body {
         touch-action: manipulation;
