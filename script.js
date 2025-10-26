@@ -62,20 +62,6 @@ class VectorArkanoid {
             this.paddle.y = this.height - 25;
             this.paddle.width = Math.max(80, this.width / 5);
         }
-        
-        if (this.currentDrawing) {
-            this.redrawBlocks();
-        }
-    }
-    
-    redrawBlocks() {
-        if (this.currentDrawing && this.currentDrawing.blocks) {
-            this.blocks = this.currentDrawing.blocks.map(block => ({
-                ...block,
-                width: Math.max(4, this.width / 100),
-                height: Math.max(4, this.width / 100)
-            }));
-        }
     }
     
     async init() {
@@ -98,7 +84,7 @@ class VectorArkanoid {
             }
             const drawing = await response.json();
             this.currentDrawing = drawing;
-            this.redrawBlocks();
+            this.blocks = [...drawing.blocks];
             this.updateDrawingSelect('level-1');
             console.log('Уровень 1 загружен автоматически');
         } catch (error) {
@@ -241,22 +227,20 @@ class VectorArkanoid {
         const centerX = this.width / 2;
         const centerY = this.height / 3;
         const radius = Math.min(80, this.width / 4);
-        const blockSize = Math.max(4, this.width / 100);
         
         for (let angle = 0; angle < 360; angle += 15) {
             const x = centerX + Math.cos(angle * Math.PI / 180) * radius;
             const y = centerY + Math.sin(angle * Math.PI / 180) * radius;
-            blocks.push({ x, y, width: blockSize, height: blockSize, color: '#FFD700', health: 1 });
+            blocks.push({ x, y, width: 8, height: 8, color: '#FFD700', health: 1 });
         }
         
-        const eyeSize = Math.max(8, blockSize * 1.5);
-        blocks.push({ x: centerX - 25, y: centerY - 15, width: eyeSize, height: eyeSize, color: '#000', health: 1 });
-        blocks.push({ x: centerX + 25, y: centerY - 15, width: eyeSize, height: eyeSize, color: '#000', health: 1 });
+        blocks.push({ x: centerX - 25, y: centerY - 15, width: 15, height: 15, color: '#000', health: 1 });
+        blocks.push({ x: centerX + 25, y: centerY - 15, width: 15, height: 15, color: '#000', health: 1 });
         
         for (let angle = 200; angle < 340; angle += 12) {
             const x = centerX + Math.cos(angle * Math.PI / 180) * (radius * 0.6);
             const y = centerY + Math.sin(angle * Math.PI / 180) * (radius * 0.6);
-            blocks.push({ x, y, width: blockSize * 0.8, height: blockSize * 0.8, color: '#000', health: 1 });
+            blocks.push({ x, y, width: 6, height: 6, color: '#000', health: 1 });
         }
         
         return blocks;
@@ -266,7 +250,6 @@ class VectorArkanoid {
         const blocks = [];
         const centerX = this.width / 2;
         const centerY = this.height / 3;
-        const blockSize = Math.max(4, this.width / 100);
         
         for (let angle = 0; angle < 360; angle += 8) {
             const t = angle * Math.PI / 180;
@@ -276,8 +259,8 @@ class VectorArkanoid {
             blocks.push({
                 x: centerX - x * 2.5,
                 y: centerY - y * 2.5,
-                width: blockSize,
-                height: blockSize,
+                width: 6,
+                height: 6,
                 color: '#FF6B6B',
                 health: 1
             });
@@ -293,7 +276,6 @@ class VectorArkanoid {
         const points = 5;
         const outerRadius = Math.min(60, this.width / 6);
         const innerRadius = outerRadius * 0.5;
-        const blockSize = Math.max(4, this.width / 100);
         
         for (let i = 0; i <= points * 2; i++) {
             const radius = i % 2 === 0 ? outerRadius : innerRadius;
@@ -303,8 +285,8 @@ class VectorArkanoid {
             
             blocks.push({
                 x, y,
-                width: blockSize,
-                height: blockSize,
+                width: 8,
+                height: 8,
                 color: '#4ECDC4',
                 health: 1
             });
@@ -322,7 +304,7 @@ class VectorArkanoid {
         const drawings = JSON.parse(localStorage.getItem('sampleDrawings') || '{}');
         if (drawings[key]) {
             this.currentDrawing = drawings[key];
-            this.redrawBlocks();
+            this.blocks = [...drawings[key].blocks];
             this.draw();
         }
     }
@@ -337,7 +319,7 @@ class VectorArkanoid {
                     try {
                         const drawing = JSON.parse(event.target.result);
                         this.currentDrawing = drawing;
-                        this.redrawBlocks();
+                        this.blocks = [...drawing.blocks];
                         this.draw();
                     } catch (error) {
                         alert('Ошибка загрузки файла: ' + error.message);
@@ -489,7 +471,7 @@ class VectorArkanoid {
             alert(`Уровень ${this.gameState.level - 1} пройден!`);
             
             if (this.currentDrawing) {
-                this.redrawBlocks();
+                this.blocks = [...this.currentDrawing.blocks];
                 this.resetBall();
             }
         }, 500);
@@ -514,7 +496,7 @@ class VectorArkanoid {
         this.updateUI();
         
         if (this.currentDrawing) {
-            this.redrawBlocks();
+            this.blocks = [...this.currentDrawing.blocks];
         }
         this.resetBall();
     }
