@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор уровней для Арканоида1 </title>
+    <title>Генератор уровней для Арканоида</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 25%, #4a69bd 50%, #6a89cc 75%, #82ccdd 100%);
             color: white;
             min-height: 100vh;
             padding: 20px;
@@ -26,6 +26,7 @@
             border-radius: 15px;
             padding: 20px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         h1 {
@@ -42,9 +43,10 @@
         }
 
         .control-group {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             padding: 15px;
             border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         h2 {
@@ -80,17 +82,20 @@
             font-size: 16px;
             margin: 5px;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         button:hover {
             background: #ff5252;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         button:disabled {
             background: #cccccc;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
         .preview-area {
@@ -101,10 +106,11 @@
         }
 
         .preview-box {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
             padding: 15px;
             min-height: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         canvas {
@@ -117,7 +123,7 @@
         }
 
         .json-output {
-            background: #2d3748;
+            background: #1e3a8a;
             color: #e2e8f0;
             padding: 15px;
             border-radius: 8px;
@@ -128,6 +134,7 @@
             max-height: 400px;
             overflow-y: auto;
             margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .download-btn {
@@ -162,21 +169,25 @@
         .success {
             background: rgba(76, 175, 80, 0.3);
             color: #a5d6a7;
+            border: 1px solid rgba(76, 175, 80, 0.5);
         }
 
         .error {
             background: rgba(244, 67, 54, 0.3);
             color: #ef9a9a;
+            border: 1px solid rgba(244, 67, 54, 0.5);
         }
 
         .info {
             background: rgba(33, 150, 243, 0.3);
             color: #90caf9;
+            border: 1px solid rgba(33, 150, 243, 0.5);
         }
 
         .warning {
             background: rgba(255, 152, 0, 0.3);
             color: #ffcc80;
+            border: 1px solid rgba(255, 152, 0, 0.5);
         }
 
         .notification {
@@ -190,6 +201,7 @@
             z-index: 1000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             animation: slideIn 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         @keyframes slideIn {
@@ -216,6 +228,7 @@
             border-radius: 5px;
             margin-top: 10px;
             font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         @media (max-width: 768px) {
@@ -243,7 +256,7 @@
                 <input type="file" id="imageInput" accept="image/*" class="file-input">
                 <button id="loadImage">Загрузить изображение</button>
                 <div id="imageStatus" class="status info">Выберите изображение для генерации уровня</div>
-                <div class="size-info">⚠️ Максимальный размер: 300px в ширину (изображение будет уменьшено)</div>
+                <div class="size-info">⚠️ Максимальный размер: 400px в ширину (изображение будет уменьшено)</div>
             </div>
 
             <div class="control-group">
@@ -252,8 +265,8 @@
                 <label>Размер блока: <span id="blockSizeValue" class="range-value">8</span>px</label>
                 <input type="range" id="blockSize" min="3" max="20" value="8">
                 
-                <label>Чувствительность: <span id="sensitivityValue" class="range-value">200</span></label>
-                <input type="range" id="sensitivity" min="1" max="255" value="200">
+                <label>Чувствительность фона: <span id="sensitivityValue" class="range-value">50</span></label>
+                <input type="range" id="sensitivity" min="1" max="100" value="50">
                 
                 <label>Объединение блоков: <span id="mergeValue" class="range-value">5</span></label>
                 <input type="range" id="mergeThreshold" min="1" max="20" value="5">
@@ -296,14 +309,14 @@
                 
                 this.settings = {
                     blockSize: 8,
-                    sensitivity: 200, // Выше значение = игнорируем более светлые пиксели
-                    mergeThreshold: 5  // Порог объединения блоков
+                    sensitivity: 50, // Процент похожести для определения фона
+                    mergeThreshold: 5
                 };
                 
                 this.currentImage = null;
                 this.blocks = [];
                 this.jsonData = null;
-                this.MAX_WIDTH = 300; // Уменьшили максимальную ширину до 300px
+                this.MAX_WIDTH = 400; // Увеличили до 400px
                 
                 this.init();
             }
@@ -372,7 +385,6 @@
                     img.onload = () => {
                         console.log('Исходное изображение:', img.width, 'x', img.height);
                         
-                        // Проверяем размер и уменьшаем если нужно
                         if (img.width > this.MAX_WIDTH) {
                             this.currentImage = this.resizeImage(img, this.MAX_WIDTH);
                             status.textContent = `Изображение уменьшено: ${this.currentImage.width}x${this.currentImage.height} (было ${img.width}x${img.height})`;
@@ -389,7 +401,6 @@
                     img.onerror = () => {
                         status.textContent = 'Ошибка загрузки изображения';
                         status.className = 'status error';
-                        console.error('Ошибка загрузки изображения');
                     };
                     img.src = e.target.result;
                 };
@@ -404,7 +415,6 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Рассчитываем новые размеры с сохранением пропорций
                 const scale = maxWidth / image.width;
                 const newWidth = maxWidth;
                 const newHeight = Math.round(image.height * scale);
@@ -412,10 +422,8 @@
                 canvas.width = newWidth;
                 canvas.height = newHeight;
                 
-                // Рисуем уменьшенное изображение
                 ctx.drawImage(image, 0, 0, newWidth, newHeight);
                 
-                // Создаем новое изображение из canvas
                 const resizedImage = new Image();
                 resizedImage.src = canvas.toDataURL();
                 
@@ -429,10 +437,8 @@
                 const canvas = this.imageCanvas;
                 const ctx = this.imageCtx;
                 
-                // Очистка canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Масштабирование изображения под canvas предпросмотра
                 const scale = Math.min(
                     canvas.width / this.currentImage.width,
                     canvas.height / this.currentImage.height
@@ -445,7 +451,6 @@
                 
                 ctx.drawImage(this.currentImage, x, y, width, height);
                 
-                // Информация об изображении
                 document.getElementById('imageInfo').textContent = 
                     `Размер: ${this.currentImage.width}x${this.currentImage.height}`;
             }
@@ -464,7 +469,6 @@
                 this.blocks = [];
                 this.processImage();
                 
-                // Объединяем блоки
                 const beforeMerge = this.blocks.length;
                 this.mergeBlocks();
                 const afterMerge = this.blocks.length;
@@ -472,7 +476,6 @@
                 this.drawVectorPreview();
                 this.generateJson();
                 
-                // Статистика
                 const stats = document.getElementById('generationStats');
                 stats.innerHTML = `
                     Блоков создано: ${beforeMerge}<br>
@@ -484,44 +487,42 @@
                 status.className = 'status success';
                 document.getElementById('downloadJson').disabled = false;
                 document.getElementById('copyJsonBtn').disabled = false;
-                
-                console.log('Генерация завершена. Блоков:', afterMerge);
             }
             
             processImage() {
                 console.log('Обработка изображения...');
                 
-                // Создаем временный canvas для обработки
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
-                // Устанавливаем размер как у текущего изображения (уже уменьшенного)
                 tempCanvas.width = this.currentImage.width;
                 tempCanvas.height = this.currentImage.height;
                 
-                // Рисуем изображение
                 tempCtx.drawImage(this.currentImage, 0, 0);
                 
-                // Получаем данные пикселей
                 const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                 const data = imageData.data;
                 
                 const blockSize = this.settings.blockSize;
-                const sensitivity = this.settings.sensitivity;
                 
                 console.log('Обработка изображения размером:', tempCanvas.width, 'x', tempCanvas.height);
-                console.log('Размер блока:', blockSize, 'Чувствительность:', sensitivity);
+                
+                // Определяем цвет фона по краям изображения
+                const backgroundColor = this.detectBackgroundColor(data, tempCanvas.width, tempCanvas.height);
+                console.log('Определенный цвет фона:', backgroundColor);
                 
                 // Создаем карту для отслеживания обработанных пикселей
                 const processed = new Array(tempCanvas.width * tempCanvas.height).fill(false);
                 
-                // Ищем значимые области (не фон)
+                // Сначала помечаем фон
+                this.markBackground(data, processed, backgroundColor, tempCanvas.width, tempCanvas.height);
+                
+                // Затем обрабатываем только значимые области
                 for (let y = 0; y < tempCanvas.height; y += blockSize) {
                     for (let x = 0; x < tempCanvas.width; x += blockSize) {
                         if (processed[y * tempCanvas.width + x]) continue;
                         
-                        // Проверяем, является ли эта область значимой (не фон)
-                        const region = this.findSignificantRegion(data, processed, x, y, tempCanvas.width, tempCanvas.height);
+                        const region = this.findSignificantRegion(data, processed, x, y, tempCanvas.width, tempCanvas.height, backgroundColor);
                         
                         if (region.blocks.length > 0) {
                             this.blocks.push(...region.blocks);
@@ -532,16 +533,75 @@
                 console.log('Сгенерировано блоков:', this.blocks.length);
             }
             
-            findSignificantRegion(data, processed, startX, startY, width, height) {
-                const region = {
-                    blocks: [],
-                    color: null
-                };
+            detectBackgroundColor(data, width, height) {
+                // Берем пиксели с краев изображения для определения фона
+                const edgePixels = [];
+                const sampleSize = 10;
                 
+                // Верхняя граница
+                for (let x = 0; x < width; x += sampleSize) {
+                    edgePixels.push(this.getPixelColor(data, x, 0, width));
+                }
+                
+                // Нижняя граница
+                for (let x = 0; x < width; x += sampleSize) {
+                    edgePixels.push(this.getPixelColor(data, x, height - 1, width));
+                }
+                
+                // Левая граница
+                for (let y = 0; y < height; y += sampleSize) {
+                    edgePixels.push(this.getPixelColor(data, 0, y, width));
+                }
+                
+                // Правая граница
+                for (let y = 0; y < height; y += sampleSize) {
+                    edgePixels.push(this.getPixelColor(data, width - 1, y, width));
+                }
+                
+                // Находим наиболее часто встречающийся цвет
+                const colorCounts = {};
+                edgePixels.forEach(color => {
+                    colorCounts[color] = (colorCounts[color] || 0) + 1;
+                });
+                
+                let maxCount = 0;
+                let backgroundColor = '#ffffff';
+                
+                for (const [color, count] of Object.entries(colorCounts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        backgroundColor = color;
+                    }
+                }
+                
+                return backgroundColor;
+            }
+            
+            getPixelColor(data, x, y, width) {
+                const index = (y * width + x) * 4;
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+                return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
+            }
+            
+            markBackground(data, processed, backgroundColor, width, height) {
+                const stack = [];
                 const blockSize = this.settings.blockSize;
-                const sensitivity = this.settings.sensitivity;
-                const stack = [[startX, startY]];
-                let totalR = 0, totalG = 0, totalB = 0, pixelCount = 0;
+                
+                // Добавляем края изображения в стек
+                for (let x = 0; x < width; x += blockSize) {
+                    stack.push([x, 0]); // Верхний край
+                    stack.push([x, height - 1]); // Нижний край
+                }
+                for (let y = 0; y < height; y += blockSize) {
+                    stack.push([0, y]); // Левый край
+                    stack.push([width - 1, y]); // Правый край
+                }
+                
+                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
+                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
+                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
                 
                 while (stack.length > 0) {
                     const [x, y] = stack.pop();
@@ -549,53 +609,86 @@
                     if (x < 0 || x >= width || y < 0 || y >= height) continue;
                     if (processed[y * width + x]) continue;
                     
-                    const index = (y * width + x) * 4;
-                    const r = data[index];
-                    const g = data[index + 1];
-                    const b = data[index + 2];
-                    const a = data[index + 3];
+                    const pixelColor = this.getPixelColor(data, x, y, width);
+                    const pixelR = parseInt(pixelColor.substr(1, 2), 16);
+                    const pixelG = parseInt(pixelColor.substr(3, 2), 16);
+                    const pixelB = parseInt(pixelColor.substr(5, 2), 16);
                     
-                    // Проверяем, не является ли пиксель фоном
-                    const brightness = (r + g + b) / 3;
-                    const isBackground = brightness > sensitivity || a < 50;
+                    // Проверяем похожесть цвета на фон
+                    const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
+                    const maxDiff = 765 * (this.settings.sensitivity / 100); // 765 - максимальная разница
                     
-                    if (isBackground) {
+                    if (colorDiff <= maxDiff) {
                         processed[y * width + x] = true;
-                        continue;
+                        
+                        // Добавляем соседей
+                        stack.push([x + blockSize, y]);
+                        stack.push([x - blockSize, y]);
+                        stack.push([x, y + blockSize]);
+                        stack.push([x, y - blockSize]);
                     }
+                }
+            }
+            
+            findSignificantRegion(data, processed, startX, startY, width, height, backgroundColor) {
+                const region = {
+                    blocks: [],
+                    color: null
+                };
+                
+                const blockSize = this.settings.blockSize;
+                const stack = [[startX, startY]];
+                let totalR = 0, totalG = 0, totalB = 0, pixelCount = 0;
+                
+                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
+                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
+                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
+                
+                while (stack.length > 0) {
+                    const [x, y] = stack.pop();
                     
-                    // Значимый пиксель - добавляем в регион
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+                    if (processed[y * width + x]) continue;
+                    
                     processed[y * width + x] = true;
-                    totalR += r;
-                    totalG += g;
-                    totalB += b;
-                    pixelCount++;
                     
-                    // Добавляем блок
-                    region.blocks.push({
-                        x: Math.floor(x / blockSize) * blockSize,
-                        y: Math.floor(y / blockSize) * blockSize,
-                        width: blockSize,
-                        height: blockSize,
-                        color: '#000000', // Временный цвет
-                        health: 1
-                    });
+                    const pixelColor = this.getPixelColor(data, x, y, width);
+                    const pixelR = parseInt(pixelColor.substr(1, 2), 16);
+                    const pixelG = parseInt(pixelColor.substr(3, 2), 16);
+                    const pixelB = parseInt(pixelColor.substr(5, 2), 16);
                     
-                    // Добавляем соседей
-                    stack.push([x + blockSize, y]);
-                    stack.push([x - blockSize, y]);
-                    stack.push([x, y + blockSize]);
-                    stack.push([x, y - blockSize]);
+                    // Проверяем, что цвет отличается от фона
+                    const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
+                    const maxDiff = 765 * (this.settings.sensitivity / 100);
+                    
+                    if (colorDiff > maxDiff) {
+                        totalR += pixelR;
+                        totalG += pixelG;
+                        totalB += pixelB;
+                        pixelCount++;
+                        
+                        region.blocks.push({
+                            x: Math.floor(x / blockSize) * blockSize,
+                            y: Math.floor(y / blockSize) * blockSize,
+                            width: blockSize,
+                            height: blockSize,
+                            color: '#000000',
+                            health: 1
+                        });
+                        
+                        stack.push([x + blockSize, y]);
+                        stack.push([x - blockSize, y]);
+                        stack.push([x, y + blockSize]);
+                        stack.push([x, y - blockSize]);
+                    }
                 }
                 
-                // Устанавливаем средний цвет региона
                 if (pixelCount > 0) {
                     const avgR = Math.round(totalR / pixelCount);
                     const avgG = Math.round(totalG / pixelCount);
                     const avgB = Math.round(totalB / pixelCount);
                     region.color = `#${this.componentToHex(avgR)}${this.componentToHex(avgG)}${this.componentToHex(avgB)}`;
                     
-                    // Устанавливаем цвет для всех блоков региона
                     region.blocks.forEach(block => {
                         block.color = region.color;
                     });
@@ -611,7 +704,6 @@
                 const mergedBlocks = [];
                 const merged = new Set();
                 
-                // Сортируем блоки по координатам для более эффективного объединения
                 this.blocks.sort((a, b) => {
                     if (a.y !== b.y) return a.y - b.y;
                     return a.x - b.x;
@@ -623,13 +715,11 @@
                     const current = this.blocks[i];
                     let mergedBlock = { ...current };
                     
-                    // Пытаемся объединить с соседними блоками того же цвета
                     for (let j = i + 1; j < this.blocks.length; j++) {
                         if (merged.has(j)) continue;
                         
                         const candidate = this.blocks[j];
                         
-                        // Проверяем, можно ли объединить
                         if (this.canMerge(mergedBlock, candidate)) {
                             mergedBlock = this.mergeTwoBlocks(mergedBlock, candidate);
                             merged.add(j);
@@ -645,10 +735,8 @@
             }
             
             canMerge(block1, block2) {
-                // Проверяем одинаковый ли цвет
                 if (block1.color !== block2.color) return false;
                 
-                // Проверяем, находятся ли блоки на одной линии и соприкасаются
                 const sameRow = block1.y === block2.y && 
                                block1.height === block2.height &&
                                (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
@@ -685,7 +773,6 @@
                 const canvas = this.vectorCanvas;
                 const ctx = this.vectorCtx;
                 
-                // Очистка canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#f0f0f0';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -698,7 +785,6 @@
                     return;
                 }
                 
-                // Находим границы всех блоков для масштабирования
                 const minX = Math.min(...this.blocks.map(b => b.x));
                 const maxX = Math.max(...this.blocks.map(b => b.x + b.width));
                 const minY = Math.min(...this.blocks.map(b => b.y));
@@ -708,11 +794,9 @@
                 const scaleY = canvas.height / (maxY - minY);
                 const scale = Math.min(scaleX, scaleY) * 0.8;
                 
-                // Центрируем
                 const offsetX = (canvas.width - (maxX - minX) * scale) / 2;
                 const offsetY = (canvas.height - (maxY - minY) * scale) / 2;
                 
-                // Рисуем блоки
                 this.blocks.forEach(block => {
                     ctx.fillStyle = block.color;
                     ctx.fillRect(
@@ -722,7 +806,6 @@
                         block.height * scale
                     );
                     
-                    // Обводка для лучшей видимости
                     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
                     ctx.lineWidth = 1;
                     ctx.strokeRect(
