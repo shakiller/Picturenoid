@@ -265,8 +265,8 @@
                 <label>Размер блока: <span id="blockSizeValue" class="range-value">6</span>px</label>
                 <input type="range" id="blockSize" min="3" max="15" value="6">
                 
-                <label>Чувствительность фона: <span id="sensitivityValue" class="range-value">30</span></label>
-                <input type="range" id="sensitivity" min="1" max="100" value="30">
+                <label>Чувствительность цвета: <span id="sensitivityValue" class="range-value">10</span></label>
+                <input type="range" id="sensitivity" min="1" max="50" value="10">
                 
                 <label>Объединение блоков: <span id="mergeValue" class="range-value">3</span></label>
                 <input type="range" id="mergeThreshold" min="1" max="10" value="3">
@@ -309,7 +309,7 @@
                 
                 this.settings = {
                     blockSize: 6,
-                    sensitivity: 30, // Более строгая чувствительность
+                    sensitivity: 10, // Чувствительность для сравнения цветов
                     mergeThreshold: 3
                 };
                 
@@ -507,26 +507,22 @@
                 
                 console.log('Обработка изображения размером:', tempCanvas.width, 'x', tempCanvas.height);
                 
-                // Определяем цвет фона по краям изображения (более точный метод)
-                const backgroundColor = this.detectBackgroundColor(data, tempCanvas.width, tempCanvas.height);
-                console.log('Определенный цвет фона:', backgroundColor);
+                // Создаем карту для отслеживания фона (заливка от краев)
+                const backgroundMap = new Array(tempCanvas.width * tempCanvas.height).fill(false);
                 
-                // Создаем карту для отслеживания обработанных пикселей
-                const processed = new Array(tempCanvas.width * tempCanvas.height).fill(false);
+                // Запускаем заливку фона от всех краевых пикселей
+                this.floodFillBackgroundFromEdges(data, backgroundMap, tempCanvas.width, tempCanvas.height);
                 
-                // Только помечаем края как фон, не заливаем всю середину
-                this.markEdgeBackground(data, processed, backgroundColor, tempCanvas.width, tempCanvas.height);
-                
-                // Обрабатываем все пиксели, кроме помеченных как фон
+                // Создаем блоки только для НЕ фоновых пикселей
                 for (let y = 0; y < tempCanvas.height; y += blockSize) {
                     for (let x = 0; x < tempCanvas.width; x += blockSize) {
-                        if (processed[y * tempCanvas.width + x]) continue;
+                        // Проверяем центральную точку блока
+                        const centerX = Math.min(x + Math.floor(blockSize / 2), tempCanvas.width - 1);
+                        const centerY = Math.min(y + Math.floor(blockSize / 2), tempCanvas.height - 1);
                         
-                        const pixelColor = this.getPixelColor(data, x, y, tempCanvas.width);
-                        const isBackground = this.isBackgroundColor(pixelColor, backgroundColor);
-                        
-                        if (!isBackground) {
-                            // Создаем блок для значимого пикселя
+                        if (!backgroundMap[centerY * tempCanvas.width + centerX]) {
+                            // Это не фон - создаем блок
+                            const pixelColor = this.getPixelColor(data, centerX, centerY, tempCanvas.width);
                             this.blocks.push({
                                 x: Math.floor(x / blockSize) * blockSize,
                                 y: Math.floor(y / blockSize) * blockSize,
@@ -542,122 +538,82 @@
                 console.log('Сгенерировано блоков:', this.blocks.length);
             }
             
-            detectBackgroundColor(data, width, height) {
-                // Более точное определение фона - берем только самые края
+            floodFillBackgroundFromEdges(data, backgroundMap, width, height) {
+                console.log('Запуск заливки фона от краев...');
+                
+                // Собираем все краевые пиксели для запуска заливки
                 const edgePixels = [];
-                const edgeSize = 2; // Только 2 пикселя от края
                 
-                // Верхний край
-                for (let y = 0; y < edgeSize; y++) {
-                    for (let x = 0; x < width; x++) {
-                        edgePixels.push(this.getPixelColor(data, x, y, width));
-                    }
+                // Верхний и нижний края
+                for (let x = 0; x < width; x++) {
+                    edgePixels.push([x, 0]); // Верх
+                    edgePixels.push([x, height - 1]); // Низ
                 }
                 
-                // Нижний край
-                for (let y = height - edgeSize; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        edgePixels.push(this.getPixelColor(data, x, y, width));
-                    }
+                // Левый и правый края (исключая углы, чтобы не дублировать)
+                for (let y = 1; y < height - 1; y++) {
+                    edgePixels.push([0, y]); // Лево
+                    edgePixels.push([width - 1, y]); // Право
                 }
                 
-                // Левый край
-                for (let x = 0; x < edgeSize; x++) {
-                    for (let y = edgeSize; y < height - edgeSize; y++) {
-                        edgePixels.push(this.getPixelColor(data, x, y, width));
+                // Запускаем заливку для каждого краевого пикселя
+                edgePixels.forEach(([x, y]) => {
+                    if (!backgroundMap[y * width + x]) {
+                        this.floodFill(data, backgroundMap, x, y, width, height);
                     }
-                }
-                
-                // Правый край
-                for (let x = width - edgeSize; x < width; x++) {
-                    for (let y = edgeSize; y < height - edgeSize; y++) {
-                        edgePixels.push(this.getPixelColor(data, x, y, width));
-                    }
-                }
-                
-                // Находим наиболее часто встречающийся цвет
-                const colorCounts = {};
-                edgePixels.forEach(color => {
-                    colorCounts[color] = (colorCounts[color] || 0) + 1;
                 });
                 
-                let maxCount = 0;
-                let backgroundColor = '#ffffff';
-                
-                for (const [color, count] of Object.entries(colorCounts)) {
-                    if (count > maxCount) {
-                        maxCount = count;
-                        backgroundColor = color;
-                    }
-                }
-                
-                return backgroundColor;
+                console.log('Заливка фона завершена');
             }
             
-            markEdgeBackground(data, processed, backgroundColor, width, height) {
-                const edgeSize = 5; // Только 5 пикселей от края
-                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
-                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
-                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
+            floodFill(data, backgroundMap, startX, startY, width, height) {
+                const stack = [[startX, startY]];
+                const startColor = this.getPixelColor(data, startX, startY, width);
                 
-                // Помечаем только края, не заливаем середину
-                for (let y = 0; y < edgeSize; y++) {
-                    for (let x = 0; x < width; x++) {
-                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
-                            processed[y * width + x] = true;
-                        }
-                    }
-                }
-                
-                for (let y = height - edgeSize; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
-                            processed[y * width + x] = true;
-                        }
-                    }
-                }
-                
-                for (let x = 0; x < edgeSize; x++) {
-                    for (let y = edgeSize; y < height - edgeSize; y++) {
-                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
-                            processed[y * width + x] = true;
-                        }
-                    }
-                }
-                
-                for (let x = width - edgeSize; x < width; x++) {
-                    for (let y = edgeSize; y < height - edgeSize; y++) {
-                        if (this.isPixelBackground(data, x, y, width, bgR, bgG, bgB)) {
-                            processed[y * width + x] = true;
-                        }
+                while (stack.length > 0) {
+                    const [x, y] = stack.pop();
+                    
+                    // Проверяем границы
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+                    
+                    const index = y * width + x;
+                    
+                    // Если уже обработан - пропускаем
+                    if (backgroundMap[index]) continue;
+                    
+                    const currentColor = this.getPixelColor(data, x, y, width);
+                    
+                    // Проверяем, похож ли цвет на начальный (в пределах чувствительности)
+                    if (this.colorsAreSimilar(startColor, currentColor)) {
+                        // Помечаем как фон
+                        backgroundMap[index] = true;
+                        
+                        // Добавляем соседей в стек
+                        stack.push([x + 1, y]);
+                        stack.push([x - 1, y]);
+                        stack.push([x, y + 1]);
+                        stack.push([x, y - 1]);
                     }
                 }
             }
             
-            isPixelBackground(data, x, y, width, bgR, bgG, bgB) {
-                const pixelColor = this.getPixelColor(data, x, y, width);
-                const pixelR = parseInt(pixelColor.substr(1, 2), 16);
-                const pixelG = parseInt(pixelColor.substr(3, 2), 16);
-                const pixelB = parseInt(pixelColor.substr(5, 2), 16);
+            colorsAreSimilar(color1, color2) {
+                const r1 = parseInt(color1.substr(1, 2), 16);
+                const g1 = parseInt(color1.substr(3, 2), 16);
+                const b1 = parseInt(color1.substr(5, 2), 16);
                 
-                const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
-                const maxDiff = 765 * (this.settings.sensitivity / 100);
+                const r2 = parseInt(color2.substr(1, 2), 16);
+                const g2 = parseInt(color2.substr(3, 2), 16);
+                const b2 = parseInt(color2.substr(5, 2), 16);
                 
-                return colorDiff <= maxDiff;
-            }
-            
-            isBackgroundColor(pixelColor, backgroundColor) {
-                const pixelR = parseInt(pixelColor.substr(1, 2), 16);
-                const pixelG = parseInt(pixelColor.substr(3, 2), 16);
-                const pixelB = parseInt(pixelColor.substr(5, 2), 16);
-                const bgR = parseInt(backgroundColor.substr(1, 2), 16);
-                const bgG = parseInt(backgroundColor.substr(3, 2), 16);
-                const bgB = parseInt(backgroundColor.substr(5, 2), 16);
+                // Вычисляем разницу между цветами
+                const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
                 
-                const colorDiff = Math.abs(pixelR - bgR) + Math.abs(pixelG - bgG) + Math.abs(pixelB - bgB);
-                const maxDiff = 765 * (this.settings.sensitivity / 100);
+                // Максимальная возможная разница - 765 (255*3)
+                // Чувствительность определяет порог
+                const threshold = this.settings.sensitivity * 7.65; // 10 -> 76.5, 50 -> 382.5
                 
-                return colorDiff <= maxDiff;
+                return diff <= threshold;
             }
             
             getPixelColor(data, x, y, width) {
