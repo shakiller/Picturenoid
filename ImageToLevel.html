@@ -87,8 +87,10 @@
             transform: translateY(-2px);
         }
 
-        button:active {
-            transform: translateY(0);
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .preview-area {
@@ -110,6 +112,8 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             background: white;
+            display: block;
+            margin: 0 auto;
         }
 
         .json-output {
@@ -123,6 +127,7 @@
             word-wrap: break-word;
             max-height: 400px;
             overflow-y: auto;
+            margin-top: 15px;
         }
 
         .download-btn {
@@ -135,6 +140,7 @@
 
         .file-input {
             margin: 10px 0;
+            color: white;
         }
 
         .status {
@@ -155,6 +161,11 @@
             color: #ef9a9a;
         }
 
+        .info {
+            background: rgba(33, 150, 243, 0.3);
+            color: #90caf9;
+        }
+
         @media (max-width: 768px) {
             .controls, .preview-area {
                 grid-template-columns: 1fr;
@@ -171,35 +182,37 @@
                 <h2>📁 Загрузка изображения</h2>
                 <input type="file" id="imageInput" accept="image/*" class="file-input">
                 <button id="loadImage">Загрузить изображение</button>
-                <div id="imageStatus" class="status"></div>
+                <div id="imageStatus" class="status info">Выберите изображение для генерации уровня</div>
             </div>
 
             <div class="control-group">
                 <h2>⚙️ Настройки генерации</h2>
                 
-                <label>Размер блока: <span id="blockSizeValue" class="range-value">10</span>px</label>
-                <input type="range" id="blockSize" min="5" max="30" value="10">
+                <label>Размер блока: <span id="blockSizeValue" class="range-value">15</span>px</label>
+                <input type="range" id="blockSize" min="5" max="50" value="15">
                 
-                <label>Порог прозрачности: <span id="thresholdValue" class="range-value">10</span>%</label>
-                <input type="range" id="threshold" min="0" max="100" value="10">
+                <label>Чувствительность: <span id="sensitivityValue" class="range-value">128</span></label>
+                <input type="range" id="sensitivity" min="1" max="255" value="128">
                 
-                <label>Минимальная область: <span id="minAreaValue" class="range-value">1</span> блоков</label>
-                <input type="range" id="minArea" min="1" max="10" value="1">
+                <label>Минимальный размер: <span id="minSizeValue" class="range-value">2</span> блоков</label>
+                <input type="range" id="minSize" min="1" max="20" value="2">
                 
-                <button id="generateLevel">Сгенерировать уровень</button>
+                <button id="generateLevel" disabled>Сгенерировать уровень</button>
                 <button id="downloadJson" class="download-btn" disabled>Скачать JSON</button>
             </div>
         </div>
 
         <div class="preview-area">
             <div class="preview-box">
-                <h2>👁️ Предпросмотр изображения</h2>
-                <canvas id="imageCanvas"></canvas>
+                <h2>👁️ Исходное изображение</h2>
+                <canvas id="imageCanvas" width="400" height="300"></canvas>
+                <div id="imageInfo" class="status"></div>
             </div>
             
             <div class="preview-box">
-                <h2>🎯 Векторный результат</h2>
-                <canvas id="vectorCanvas"></canvas>
+                <h2>🎯 Векторный уровень</h2>
+                <canvas id="vectorCanvas" width="400" height="300"></canvas>
+                <div id="vectorInfo" class="status">Здесь появится сгенерированный уровень</div>
                 <div class="json-output" id="jsonOutput">
                     JSON появится здесь после генерации...
                 </div>
@@ -217,9 +230,9 @@
                 this.jsonOutput = document.getElementById('jsonOutput');
                 
                 this.settings = {
-                    blockSize: 10,
-                    threshold: 10,
-                    minArea: 1
+                    blockSize: 15,
+                    sensitivity: 128,
+                    minSize: 2
                 };
                 
                 this.currentImage = null;
@@ -229,31 +242,30 @@
             }
             
             init() {
+                console.log('Инициализация генератора...');
+                
                 // Настройка слайдеров
                 document.getElementById('blockSize').addEventListener('input', (e) => {
                     this.settings.blockSize = parseInt(e.target.value);
                     document.getElementById('blockSizeValue').textContent = this.settings.blockSize;
                 });
                 
-                document.getElementById('threshold').addEventListener('input', (e) => {
-                    this.settings.threshold = parseInt(e.target.value);
-                    document.getElementById('thresholdValue').textContent = this.settings.threshold;
+                document.getElementById('sensitivity').addEventListener('input', (e) => {
+                    this.settings.sensitivity = parseInt(e.target.value);
+                    document.getElementById('sensitivityValue').textContent = this.settings.sensitivity;
                 });
                 
-                document.getElementById('minArea').addEventListener('input', (e) => {
-                    this.settings.minArea = parseInt(e.target.value);
-                    document.getElementById('minAreaValue').textContent = this.settings.minArea;
+                document.getElementById('minSize').addEventListener('input', (e) => {
+                    this.settings.minSize = parseInt(e.target.value);
+                    document.getElementById('minSizeValue').textContent = this.settings.minSize;
                 });
                 
-                // Кнопки
-                document.getElementById('loadImage').addEventListener('click', () => {
-                    document.getElementById('imageInput').click();
-                });
-                
+                // Загрузка изображения
                 document.getElementById('imageInput').addEventListener('change', (e) => {
                     this.loadImage(e.target.files[0]);
                 });
                 
+                // Кнопки
                 document.getElementById('generateLevel').addEventListener('click', () => {
                     this.generateLevel();
                 });
@@ -263,42 +275,47 @@
                 });
                 
                 // Инициализация canvas
-                this.resizeCanvases();
-                window.addEventListener('resize', () => this.resizeCanvases());
+                this.clearCanvas(this.imageCanvas, this.imageCtx);
+                this.clearCanvas(this.vectorCanvas, this.vectorCtx);
             }
             
-            resizeCanvases() {
-                const container = document.querySelector('.preview-box');
-                const width = Math.min(container.clientWidth - 40, 500);
-                const height = 300;
-                
-                this.imageCanvas.width = width;
-                this.imageCanvas.height = height;
-                this.vectorCanvas.width = width;
-                this.vectorCanvas.height = height;
+            clearCanvas(canvas, ctx) {
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#666';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Изображение не загружено', canvas.width / 2, canvas.height / 2);
             }
             
             loadImage(file) {
                 if (!file) return;
                 
                 const status = document.getElementById('imageStatus');
-                status.textContent = 'Загрузка...';
-                status.className = 'status';
+                status.textContent = 'Загрузка изображения...';
+                status.className = 'status info';
                 
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
+                        console.log('Изображение загружено:', img.width, 'x', img.height);
                         this.currentImage = img;
                         this.drawImagePreview();
-                        status.textContent = 'Изображение загружено!';
+                        status.textContent = `Изображение загружено: ${img.width}x${img.height}`;
                         status.className = 'status success';
+                        document.getElementById('generateLevel').disabled = false;
                     };
                     img.onerror = () => {
                         status.textContent = 'Ошибка загрузки изображения';
                         status.className = 'status error';
+                        console.error('Ошибка загрузки изображения');
                     };
                     img.src = e.target.result;
+                };
+                reader.onerror = () => {
+                    status.textContent = 'Ошибка чтения файла';
+                    status.className = 'status error';
                 };
                 reader.readAsDataURL(file);
             }
@@ -324,6 +341,10 @@
                 const y = (canvas.height - height) / 2;
                 
                 ctx.drawImage(this.currentImage, x, y, width, height);
+                
+                // Информация об изображении
+                document.getElementById('imageInfo').textContent = 
+                    `Размер: ${this.currentImage.width}x${this.currentImage.height}`;
             }
             
             generateLevel() {
@@ -332,114 +353,101 @@
                     return;
                 }
                 
+                console.log('Начало генерации уровня...');
+                const status = document.getElementById('vectorInfo');
+                status.textContent = 'Генерация уровня...';
+                status.className = 'status info';
+                
                 this.blocks = [];
                 this.processImage();
                 this.drawVectorPreview();
                 this.generateJson();
                 
+                status.textContent = `Сгенерировано ${this.blocks.length} блоков`;
+                status.className = 'status success';
                 document.getElementById('downloadJson').disabled = false;
+                
+                console.log('Генерация завершена. Блоков:', this.blocks.length);
             }
             
             processImage() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                console.log('Обработка изображения...');
                 
-                // Устанавливаем размер canvas как у исходного изображения
-                canvas.width = this.currentImage.width;
-                canvas.height = this.currentImage.height;
+                // Создаем временный canvas для обработки
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Устанавливаем размер как у исходного изображения
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
                 
                 // Рисуем изображение
-                ctx.drawImage(this.currentImage, 0, 0);
+                tempCtx.drawImage(this.currentImage, 0, 0);
                 
                 // Получаем данные пикселей
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                 const data = imageData.data;
                 
-                // Создаем карту посещенных пикселей
-                const visited = new Array(canvas.width * canvas.height).fill(false);
+                const blockSize = this.settings.blockSize;
+                const sensitivity = this.settings.sensitivity;
                 
-                // Обходим изображение с шагом = размеру блока
-                for (let y = 0; y < canvas.height; y += this.settings.blockSize) {
-                    for (let x = 0; x < canvas.width; x += this.settings.blockSize) {
-                        if (visited[y * canvas.width + x]) continue;
+                console.log('Размер блока:', blockSize, 'Чувствительность:', sensitivity);
+                
+                // Простой алгоритм: проверяем каждый блок
+                for (let y = 0; y < tempCanvas.height; y += blockSize) {
+                    for (let x = 0; x < tempCanvas.width; x += blockSize) {
+                        // Проверяем центральную точку блока
+                        const centerX = Math.min(x + Math.floor(blockSize / 2), tempCanvas.width - 1);
+                        const centerY = Math.min(y + Math.floor(blockSize / 2), tempCanvas.height - 1);
                         
-                        // Проверяем, является ли пиксель частью объекта
-                        if (this.isObjectPixel(data, x, y, canvas.width)) {
-                            const region = this.floodFill(data, visited, x, y, canvas.width, canvas.height);
+                        const index = (centerY * tempCanvas.width + centerX) * 4;
+                        const r = data[index];
+                        const g = data[index + 1];
+                        const b = data[index + 2];
+                        const a = data[index + 3];
+                        
+                        // Яркость пикселя (простая формула)
+                        const brightness = (r + g + b) / 3;
+                        
+                        // Если пиксель достаточно темный и не прозрачный - добавляем блок
+                        if (brightness < sensitivity && a > 50) {
+                            // Получаем средний цвет области вокруг центральной точки
+                            const color = this.getAreaColor(data, x, y, blockSize, tempCanvas.width, tempCanvas.height);
                             
-                            if (region.blocks.length >= this.settings.minArea) {
-                                // Находим средний цвет региона
-                                const color = this.getRegionColor(region, data, canvas.width);
-                                this.blocks.push(...region.blocks.map(block => ({
-                                    ...block,
-                                    color: color
-                                })));
-                            }
+                            this.blocks.push({
+                                x: x,
+                                y: y,
+                                width: blockSize,
+                                height: blockSize,
+                                color: color,
+                                health: 1
+                            });
                         }
                     }
                 }
                 
-                console.log(`Сгенерировано ${this.blocks.length} блоков`);
-            }
-            
-            isObjectPixel(data, x, y, width) {
-                const index = (y * width + x) * 4;
-                const alpha = data[index + 3];
-                return alpha > (this.settings.threshold * 2.55); // Преобразуем % в 0-255
-            }
-            
-            floodFill(data, visited, startX, startY, width, height) {
-                const region = {
-                    blocks: [],
-                    pixels: []
-                };
+                console.log('Первоначально сгенерировано блоков:', this.blocks.length);
                 
-                const stack = [[startX, startY]];
-                const blockSize = this.settings.blockSize;
-                
-                while (stack.length > 0) {
-                    const [x, y] = stack.pop();
-                    const index = y * width + x;
-                    
-                    if (x < 0 || x >= width || y < 0 || y >= height || visited[index]) {
-                        continue;
-                    }
-                    
-                    visited[index] = true;
-                    
-                    if (this.isObjectPixel(data, x, y, width)) {
-                        // Добавляем блок в регион
-                        region.blocks.push({
-                            x: x,
-                            y: y,
-                            width: blockSize,
-                            height: blockSize,
-                            color: '#000000',
-                            health: 1
-                        });
-                        
-                        region.pixels.push([x, y]);
-                        
-                        // Добавляем соседей в стек
-                        stack.push([x + blockSize, y]);
-                        stack.push([x - blockSize, y]);
-                        stack.push([x, y + blockSize]);
-                        stack.push([x, y - blockSize]);
-                    }
+                // Фильтрация маленьких областей
+                if (this.settings.minSize > 1) {
+                    this.filterSmallAreas();
                 }
                 
-                return region;
+                console.log('После фильтрации блоков:', this.blocks.length);
             }
             
-            getRegionColor(region, data, width) {
+            getAreaColor(data, startX, startY, size, width, height) {
                 let r = 0, g = 0, b = 0, count = 0;
+                const sampleSize = Math.max(1, Math.floor(size / 3));
                 
-                for (const [x, y] of region.pixels) {
-                    const index = (y * width + x) * 4;
-                    r += data[index];
-                    g += data[index + 1];
-                    b += data[index + 2];
-                    count++;
+                for (let y = startY; y < startY + size && y < height; y += sampleSize) {
+                    for (let x = startX; x < startX + size && x < width; x += sampleSize) {
+                        const index = (y * width + x) * 4;
+                        r += data[index];
+                        g += data[index + 1];
+                        b += data[index + 2];
+                        count++;
+                    }
                 }
                 
                 if (count === 0) return '#000000';
@@ -448,12 +456,65 @@
                 g = Math.round(g / count);
                 b = Math.round(b / count);
                 
-                return `#${this.rgbToHex(r)}${this.rgbToHex(g)}${this.rgbToHex(b)}`;
+                return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
             }
             
-            rgbToHex(c) {
+            componentToHex(c) {
                 const hex = c.toString(16);
                 return hex.length === 1 ? '0' + hex : hex;
+            }
+            
+            filterSmallAreas() {
+                if (this.blocks.length === 0) return;
+                
+                const visited = new Set();
+                const areas = [];
+                
+                // Находим связанные области
+                for (let i = 0; i < this.blocks.length; i++) {
+                    if (!visited.has(i)) {
+                        const area = this.findConnectedArea(i, visited);
+                        areas.push(area);
+                    }
+                }
+                
+                // Оставляем только большие области
+                this.blocks = [];
+                areas.forEach(area => {
+                    if (area.length >= this.settings.minSize) {
+                        this.blocks.push(...area);
+                    }
+                });
+            }
+            
+            findConnectedArea(startIndex, visited) {
+                const area = [this.blocks[startIndex]];
+                visited.add(startIndex);
+                const stack = [startIndex];
+                const blockSize = this.settings.blockSize;
+                
+                while (stack.length > 0) {
+                    const currentIndex = stack.pop();
+                    const currentBlock = this.blocks[currentIndex];
+                    
+                    // Ищем соседние блоки
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        if (!visited.has(i)) {
+                            const block = this.blocks[i];
+                            const dx = Math.abs(block.x - currentBlock.x);
+                            const dy = Math.abs(block.y - currentBlock.y);
+                            
+                            // Считаем соседями блоки на расстоянии не больше размера блока
+                            if (dx <= blockSize && dy <= blockSize && (dx > 0 || dy > 0)) {
+                                area.push(block);
+                                visited.add(i);
+                                stack.push(i);
+                            }
+                        }
+                    }
+                }
+                
+                return area;
             }
             
             drawVectorPreview() {
@@ -462,12 +523,18 @@
                 
                 // Очистка canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = '#f0f0f0';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                if (this.blocks.length === 0) return;
+                if (this.blocks.length === 0) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Нет блоков для отображения', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
                 
-                // Находим границы всех блоков
+                // Находим границы всех блоков для масштабирования
                 const minX = Math.min(...this.blocks.map(b => b.x));
                 const maxX = Math.max(...this.blocks.map(b => b.x + b.width));
                 const minY = Math.min(...this.blocks.map(b => b.y));
@@ -475,7 +542,7 @@
                 
                 const scaleX = canvas.width / (maxX - minX);
                 const scaleY = canvas.height / (maxY - minY);
-                const scale = Math.min(scaleX, scaleY) * 0.9; // 90% от масштаба
+                const scale = Math.min(scaleX, scaleY) * 0.8; // 80% от масштаба
                 
                 // Центрируем
                 const offsetX = (canvas.width - (maxX - minX) * scale) / 2;
@@ -511,8 +578,6 @@
                 
                 const jsonString = JSON.stringify(levelData, null, 2);
                 this.jsonOutput.textContent = jsonString;
-                
-                // Сохраняем для скачивания
                 this.jsonData = jsonString;
             }
             
