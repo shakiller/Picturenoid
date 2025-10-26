@@ -342,7 +342,7 @@
                 this.currentImage = null;
                 this.blocks = [];
                 this.jsonData = null;
-                this.originalBlocks = []; // Сохраняем оригинальные блоки до оптимизации
+                this.originalBlocks = [];
                 this.MAX_WIDTH = 400;
                 
                 this.init();
@@ -529,6 +529,249 @@
                 document.getElementById('optimizeLevel').disabled = false;
             }
             
+            processImage() {
+                console.log('Обработка изображения...');
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
+                
+                tempCtx.drawImage(this.currentImage, 0, 0);
+                
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+                
+                const blockSize = this.settings.blockSize;
+                
+                console.log('Обработка изображения размером:', tempCanvas.width, 'x', tempCanvas.height);
+                
+                // Создаем карту для отслеживания фона (заливка от краев)
+                const backgroundMap = new Array(tempCanvas.width * tempCanvas.height).fill(false);
+                
+                // Запускаем заливку фона от всех краевых пикселей
+                this.floodFillBackgroundFromEdges(data, backgroundMap, tempCanvas.width, tempCanvas.height);
+                
+                // Создаем блоки только для НЕ фоновых пикселей
+                for (let y = 0; y < tempCanvas.height; y += blockSize) {
+                    for (let x = 0; x < tempCanvas.width; x += blockSize) {
+                        // Проверяем центральную точку блока
+                        const centerX = Math.min(x + Math.floor(blockSize / 2), tempCanvas.width - 1);
+                        const centerY = Math.min(y + Math.floor(blockSize / 2), tempCanvas.height - 1);
+                        
+                        if (!backgroundMap[centerY * tempCanvas.width + centerX]) {
+                            // Это не фон - создаем блок
+                            const pixelColor = this.getPixelColor(data, centerX, centerY, tempCanvas.width);
+                            this.blocks.push({
+                                x: Math.floor(x / blockSize) * blockSize,
+                                y: Math.floor(y / blockSize) * blockSize,
+                                width: blockSize,
+                                height: blockSize,
+                                color: pixelColor,
+                                health: 1
+                            });
+                        }
+                    }
+                }
+                
+                console.log('Сгенерировано блоков:', this.blocks.length);
+            }
+            
+            floodFillBackgroundFromEdges(data, backgroundMap, width, height) {
+                console.log('Запуск заливки фона от краев...');
+                
+                // Собираем все краевые пиксели для запуска заливки
+                const edgePixels = [];
+                
+                // Верхний и нижний края
+                for (let x = 0; x < width; x++) {
+                    edgePixels.push([x, 0]); // Верх
+                    edgePixels.push([x, height - 1]); // Низ
+                }
+                
+                // Левый и правый края (исключая углы, чтобы не дублировать)
+                for (let y = 1; y < height - 1; y++) {
+                    edgePixels.push([0, y]); // Лево
+                    edgePixels.push([width - 1, y]); // Право
+                }
+                
+                // Запускаем заливку для каждого краевого пикселя
+                edgePixels.forEach(([x, y]) => {
+                    if (!backgroundMap[y * width + x]) {
+                        this.floodFill(data, backgroundMap, x, y, width, height);
+                    }
+                });
+                
+                console.log('Заливка фона завершена');
+            }
+            
+            floodFill(data, backgroundMap, startX, startY, width, height) {
+                const stack = [[startX, startY]];
+                const startColor = this.getPixelColor(data, startX, startY, width);
+                
+                while (stack.length > 0) {
+                    const [x, y] = stack.pop();
+                    
+                    // Проверяем границы
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+                    
+                    const index = y * width + x;
+                    
+                    // Если уже обработан - пропускаем
+                    if (backgroundMap[index]) continue;
+                    
+                    const currentColor = this.getPixelColor(data, x, y, width);
+                    
+                    // Проверяем, похож ли цвет на начальный (в пределах чувствительности)
+                    if (this.colorsAreSimilar(startColor, currentColor)) {
+                        // Помечаем как фон
+                        backgroundMap[index] = true;
+                        
+                        // Добавляем соседей в стек
+                        stack.push([x + 1, y]);
+                        stack.push([x - 1, y]);
+                        stack.push([x, y + 1]);
+                        stack.push([x, y - 1]);
+                    }
+                }
+            }
+            
+            getPixelColor(data, x, y, width) {
+                const index = (y * width + x) * 4;
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+                return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
+            }
+            
+            colorsAreSimilar(color1, color2, customSensitivity = null) {
+                const sensitivity = customSensitivity || this.settings.sensitivity;
+                const r1 = parseInt(color1.substr(1, 2), 16);
+                const g1 = parseInt(color1.substr(3, 2), 16);
+                const b1 = parseInt(color1.substr(5, 2), 16);
+                
+                const r2 = parseInt(color2.substr(1, 2), 16);
+                const g2 = parseInt(color2.substr(3, 2), 16);
+                const b2 = parseInt(color2.substr(5, 2), 16);
+                
+                const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+                const threshold = sensitivity * 7.65;
+                
+                return diff <= threshold;
+            }
+            
+            componentToHex(c) {
+                const hex = c.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }
+            
+            mergeBlocksByColor() {
+                if (this.blocks.length === 0) return;
+                
+                console.log('Объединение блоков по цветам...');
+                
+                // Группируем блоки по цвету
+                const blocksByColor = {};
+                this.blocks.forEach(block => {
+                    if (!blocksByColor[block.color]) {
+                        blocksByColor[block.color] = [];
+                    }
+                    blocksByColor[block.color].push(block);
+                });
+                
+                const mergedBlocks = [];
+                
+                // Объединяем блоки для каждого цвета отдельно
+                Object.values(blocksByColor).forEach(colorBlocks => {
+                    const mergedForColor = this.mergeColorBlocks(colorBlocks);
+                    mergedBlocks.push(...mergedForColor);
+                });
+                
+                this.blocks = mergedBlocks;
+                console.log('После объединения блоков:', this.blocks.length);
+            }
+            
+            mergeColorBlocks(blocks) {
+                if (blocks.length === 0) return [];
+                
+                // Сортируем блоки по координатам
+                blocks.sort((a, b) => {
+                    if (a.y !== b.y) return a.y - b.y;
+                    return a.x - b.x;
+                });
+                
+                const merged = [];
+                const used = new Set();
+                
+                for (let i = 0; i < blocks.length; i++) {
+                    if (used.has(i)) continue;
+                    
+                    let currentBlock = blocks[i];
+                    used.add(i);
+                    
+                    // Пытаемся объединить с соседями в прямоугольник
+                    let changed;
+                    do {
+                        changed = false;
+                        
+                        for (let j = 0; j < blocks.length; j++) {
+                            if (used.has(j)) continue;
+                            
+                            const candidate = blocks[j];
+                            
+                            // Проверяем, можно ли объединить в прямоугольник
+                            if (this.canMergeToRectangle(currentBlock, candidate)) {
+                                currentBlock = this.mergeToRectangle(currentBlock, candidate);
+                                used.add(j);
+                                changed = true;
+                            }
+                        }
+                    } while (changed);
+                    
+                    merged.push(currentBlock);
+                }
+                
+                return merged;
+            }
+            
+            canMergeToRectangle(block1, block2) {
+                // Проверяем, что блоки можно объединить в прямоугольник
+                const sameColor = block1.color === block2.color;
+                const sameWidth = block1.width === block2.width;
+                const sameHeight = block1.height === block2.height;
+                
+                if (!sameColor) return false;
+                
+                // Проверяем различные варианты расположения для создания прямоугольника
+                const horizontallyAligned = block1.y === block2.y && sameHeight;
+                const verticallyAligned = block1.x === block2.x && sameWidth;
+                
+                const horizontalMerge = horizontallyAligned && 
+                    (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
+                
+                const verticalMerge = verticallyAligned && 
+                    (block1.y + block1.height === block2.y || block2.y + block2.height === block1.y);
+                
+                return horizontalMerge || verticalMerge;
+            }
+            
+            mergeToRectangle(block1, block2) {
+                const minX = Math.min(block1.x, block2.x);
+                const minY = Math.min(block1.y, block2.y);
+                const maxX = Math.max(block1.x + block1.width, block2.x + block2.width);
+                const maxY = Math.max(block1.y + block1.height, block2.y + block2.height);
+                
+                return {
+                    x: minX,
+                    y: minY,
+                    width: maxX - minX,
+                    height: maxY - minY,
+                    color: block1.color,
+                    health: 1
+                };
+            }
+            
             optimizeLevel() {
                 if (this.blocks.length === 0) {
                     alert('Сначала сгенерируйте уровень!');
@@ -664,6 +907,38 @@
                 return closestColor;
             }
             
+            getAverageColor(colors) {
+                let totalR = 0, totalG = 0, totalB = 0;
+                
+                colors.forEach(color => {
+                    totalR += parseInt(color.substr(1, 2), 16);
+                    totalG += parseInt(color.substr(3, 2), 16);
+                    totalB += parseInt(color.substr(5, 2), 16);
+                });
+                
+                const avgR = Math.round(totalR / colors.length);
+                const avgG = Math.round(totalG / colors.length);
+                const avgB = Math.round(totalB / colors.length);
+                
+                return `#${this.componentToHex(avgR)}${this.componentToHex(avgG)}${this.componentToHex(avgB)}`;
+            }
+            
+            colorDistance(color1, color2) {
+                const r1 = parseInt(color1.substr(1, 2), 16);
+                const g1 = parseInt(color1.substr(3, 2), 16);
+                const b1 = parseInt(color1.substr(5, 2), 16);
+                
+                const r2 = parseInt(color2.substr(1, 2), 16);
+                const g2 = parseInt(color2.substr(3, 2), 16);
+                const b2 = parseInt(color2.substr(5, 2), 16);
+                
+                return Math.sqrt(
+                    Math.pow(r1 - r2, 2) + 
+                    Math.pow(g1 - g2, 2) + 
+                    Math.pow(b1 - b2, 2)
+                );
+            }
+            
             advancedMergeBlocks() {
                 console.log('Расширенное объединение блоков...');
                 
@@ -737,113 +1012,135 @@
                 return !xOverlap && !yOverlap && touchesCorner;
             }
             
-            // Остальные методы остаются без изменений (processImage, floodFill, mergeBlocksByColor и т.д.)
-            processImage() {
-                // ... существующий код без изменений ...
-            }
-            
-            floodFillBackgroundFromEdges(data, backgroundMap, width, height) {
-                // ... существующий код без изменений ...
-            }
-            
-            floodFill(data, backgroundMap, startX, startY, width, height) {
-                // ... существующий код без изменений ...
-            }
-            
-            colorsAreSimilar(color1, color2, customSensitivity = null) {
-                const sensitivity = customSensitivity || this.settings.sensitivity;
-                const r1 = parseInt(color1.substr(1, 2), 16);
-                const g1 = parseInt(color1.substr(3, 2), 16);
-                const b1 = parseInt(color1.substr(5, 2), 16);
-                
-                const r2 = parseInt(color2.substr(1, 2), 16);
-                const g2 = parseInt(color2.substr(3, 2), 16);
-                const b2 = parseInt(color2.substr(5, 2), 16);
-                
-                const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
-                const threshold = sensitivity * 7.65;
-                
-                return diff <= threshold;
-            }
-            
-            colorDistance(color1, color2) {
-                const r1 = parseInt(color1.substr(1, 2), 16);
-                const g1 = parseInt(color1.substr(3, 2), 16);
-                const b1 = parseInt(color1.substr(5, 2), 16);
-                
-                const r2 = parseInt(color2.substr(1, 2), 16);
-                const g2 = parseInt(color2.substr(3, 2), 16);
-                const b2 = parseInt(color2.substr(5, 2), 16);
-                
-                return Math.sqrt(
-                    Math.pow(r1 - r2, 2) + 
-                    Math.pow(g1 - g2, 2) + 
-                    Math.pow(b1 - b2, 2)
-                );
-            }
-            
-            getAverageColor(colors) {
-                let totalR = 0, totalG = 0, totalB = 0;
-                
-                colors.forEach(color => {
-                    totalR += parseInt(color.substr(1, 2), 16);
-                    totalG += parseInt(color.substr(3, 2), 16);
-                    totalB += parseInt(color.substr(5, 2), 16);
-                });
-                
-                const avgR = Math.round(totalR / colors.length);
-                const avgG = Math.round(totalG / colors.length);
-                const avgB = Math.round(totalB / colors.length);
-                
-                return `#${this.componentToHex(avgR)}${this.componentToHex(avgG)}${this.componentToHex(avgB)}`;
-            }
-            
-            getPixelColor(data, x, y, width) {
-                // ... существующий код без изменений ...
-            }
-            
-            mergeBlocksByColor() {
-                // ... существующий код без изменений ...
-            }
-            
-            mergeColorBlocks(blocks) {
-                // ... существующий код без изменений ...
-            }
-            
-            canMergeToRectangle(block1, block2) {
-                // ... существующий код без изменений ...
-            }
-            
-            mergeToRectangle(block1, block2) {
-                // ... существующий код без изменений ...
-            }
-            
-            componentToHex(c) {
-                // ... существующий код без изменений ...
-            }
-            
             drawVectorPreview() {
-                // ... существующий код без изменений ...
+                const canvas = this.vectorCanvas;
+                const ctx = this.vectorCtx;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                if (this.blocks.length === 0) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Нет блоков для отображения', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+                
+                const minX = Math.min(...this.blocks.map(b => b.x));
+                const maxX = Math.max(...this.blocks.map(b => b.x + b.width));
+                const minY = Math.min(...this.blocks.map(b => b.y));
+                const maxY = Math.max(...this.blocks.map(b => b.y + b.height));
+                
+                const scaleX = canvas.width / (maxX - minX);
+                const scaleY = canvas.height / (maxY - minY);
+                const scale = Math.min(scaleX, scaleY) * 0.8;
+                
+                const offsetX = (canvas.width - (maxX - minX) * scale) / 2;
+                const offsetY = (canvas.height - (maxY - minY) * scale) / 2;
+                
+                this.blocks.forEach(block => {
+                    ctx.fillStyle = block.color;
+                    ctx.fillRect(
+                        offsetX + (block.x - minX) * scale,
+                        offsetY + (block.y - minY) * scale,
+                        block.width * scale,
+                        block.height * scale
+                    );
+                    
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(
+                        offsetX + (block.x - minX) * scale,
+                        offsetY + (block.y - minY) * scale,
+                        block.width * scale,
+                        block.height * scale
+                    );
+                });
             }
             
             generateJson() {
-                // ... существующий код без изменений ...
+                const levelData = {
+                    name: "Сгенерированный уровень",
+                    blocks: this.blocks
+                };
+                
+                const jsonString = JSON.stringify(levelData, null, 2);
+                this.jsonOutput.textContent = jsonString;
+                this.jsonData = jsonString;
             }
             
             downloadJson() {
-                // ... существующий код без изменений ...
+                if (!this.jsonData) return;
+                
+                const blob = new Blob([this.jsonData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                a.href = url;
+                a.download = 'generated-level.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             }
             
             async copyJsonToClipboard() {
-                // ... существующий код без изменений ...
+                if (!this.jsonData) {
+                    this.showNotification('Сначала сгенерируйте уровень!', 'error');
+                    return;
+                }
+                
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(this.jsonData);
+                        this.showNotification('✅ JSON скопирован в буфер обмена!');
+                    } else {
+                        this.fallbackCopyTextToClipboard(this.jsonData);
+                    }
+                } catch (err) {
+                    console.error('Ошибка при копировании: ', err);
+                    this.fallbackCopyTextToClipboard(this.jsonData);
+                }
             }
             
             fallbackCopyTextToClipboard(text) {
-                // ... существующий код без изменений ...
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        this.showNotification('✅ JSON скопирован в буфер обмена!');
+                    } else {
+                        throw new Error('Не удалось скопировать текст');
+                    }
+                } catch (err) {
+                    console.error('Ошибка при копировании: ', err);
+                    this.showNotification('❌ Не удалось скопировать. Скопируйте текст вручную.', 'error');
+                }
             }
             
             showNotification(message, type = 'success') {
-                // ... существующий код без изменений ...
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = 'notification';
+                notification.style.background = type === 'error' ? '#f44336' : '#4CAF50';
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 3000);
             }
         }
         
