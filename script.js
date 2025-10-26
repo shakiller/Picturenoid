@@ -2,23 +2,22 @@ class VectorArkanoid {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
+        this.resizeCanvas();
         
         this.ball = {
             x: this.width / 2,
             y: this.height - 50,
-            radius: 8,
-            speed: 5,
-            dx: 5,
-            dy: -5
+            radius: 6,
+            speed: 4,
+            dx: 4,
+            dy: -4
         };
         
         this.paddle = {
-            x: this.width / 2 - 60,
-            y: this.height - 20,
-            width: 120,
-            height: 15,
+            x: this.width / 2 - 50,
+            y: this.height - 25,
+            width: 100,
+            height: 12,
             speed: 8,
             dx: 0
         };
@@ -33,32 +32,152 @@ class VectorArkanoid {
         
         this.currentDrawing = null;
         this.blocks = [];
+        this.touchControls = {
+            left: false,
+            right: false
+        };
         
         this.init();
+    }
+    
+    resizeCanvas() {
+        const container = document.querySelector('.game-container');
+        const maxWidth = container.clientWidth - 20;
+        const maxHeight = window.innerHeight * 0.6;
+        
+        this.canvas.width = Math.min(maxWidth, 800);
+        this.canvas.height = Math.min(maxHeight, 500);
+        
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        
+        // Пересчитываем позиции при изменении размера
+        if (this.ball) {
+            this.ball.x = this.width / 2;
+            this.ball.y = this.height - 50;
+            this.ball.radius = Math.max(4, this.width / 100);
+        }
+        
+        if (this.paddle) {
+            this.paddle.x = this.width / 2 - this.paddle.width / 2;
+            this.paddle.y = this.height - 25;
+            this.paddle.width = Math.max(80, this.width / 5);
+        }
+        
+        if (this.currentDrawing) {
+            this.redrawBlocks();
+        }
+    }
+    
+    redrawBlocks() {
+        if (this.currentDrawing && this.currentDrawing.blocks) {
+            this.blocks = this.currentDrawing.blocks.map(block => ({
+                ...block,
+                width: Math.max(4, this.width / 100),
+                height: Math.max(4, this.width / 100)
+            }));
+        }
     }
     
     init() {
         this.setupEventListeners();
         this.loadSampleDrawings();
         this.gameLoop();
+        
+        // Обработка изменения ориентации и размера
+        window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.resizeCanvas(), 100);
+        });
     }
     
     setupEventListeners() {
-        // Управление paddle
+        // Клавиатура
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') this.paddle.dx = -this.paddle.speed;
             if (e.key === 'ArrowRight') this.paddle.dx = this.paddle.speed;
-            if (e.key === ' ') this.togglePause();
+            if (e.key === ' ' || e.key === 'Space') this.togglePause();
         });
         
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') this.paddle.dx = 0;
         });
         
+        // Сенсорное управление
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        
+        // Нажатие
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.touchControls.left = true;
+            this.paddle.dx = -this.paddle.speed;
+        });
+        
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.touchControls.right = true;
+            this.paddle.dx = this.paddle.speed;
+        });
+        
+        // Отпускание
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.touchControls.left = false;
+            if (!this.touchControls.right) this.paddle.dx = 0;
+        });
+        
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.touchControls.right = false;
+            if (!this.touchControls.left) this.paddle.dx = 0;
+        });
+        
+        // Отмена касания (например, палец ушел за пределы кнопки)
+        leftBtn.addEventListener('touchcancel', (e) => {
+            this.touchControls.left = false;
+            if (!this.touchControls.right) this.paddle.dx = 0;
+        });
+        
+        rightBtn.addEventListener('touchcancel', (e) => {
+            this.touchControls.right = false;
+            if (!this.touchControls.left) this.paddle.dx = 0;
+        });
+        
+        // Управление касанием по canvas (альтернативное управление)
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!this.gameState.isRunning || this.gameState.isPaused) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = this.canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            
+            // Плавное движение paddle к точке касания
+            const targetX = touchX - this.paddle.width / 2;
+            const diff = targetX - this.paddle.x;
+            
+            this.paddle.dx = diff * 0.2; // Плавное следование
+        });
+        
         // Кнопки управления
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
+        document.getElementById('startBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.startGame();
+        });
+        
         document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+        document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.togglePause();
+        });
+        
         document.getElementById('loadDrawing').addEventListener('click', () => this.loadDrawingFile());
+        document.getElementById('loadDrawing').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.loadDrawingFile();
+        });
         
         // Выбор рисунка
         document.getElementById('drawingSelect').addEventListener('change', (e) => {
@@ -67,7 +186,6 @@ class VectorArkanoid {
     }
     
     loadSampleDrawings() {
-        // Примеры векторных рисунков
         const sampleDrawings = {
             'smile': {
                 name: 'Смайлик',
@@ -91,7 +209,6 @@ class VectorArkanoid {
             select.appendChild(option);
         });
         
-        // Сохраняем примеры в localStorage для демонстрации
         localStorage.setItem('sampleDrawings', JSON.stringify(sampleDrawings));
     }
     
@@ -99,24 +216,26 @@ class VectorArkanoid {
         const blocks = [];
         const centerX = this.width / 2;
         const centerY = this.height / 3;
-        const radius = 100;
+        const radius = Math.min(80, this.width / 4);
+        const blockSize = Math.max(4, this.width / 100);
         
         // Лицо (круг)
-        for (let angle = 0; angle < 360; angle += 10) {
+        for (let angle = 0; angle < 360; angle += 15) {
             const x = centerX + Math.cos(angle * Math.PI / 180) * radius;
             const y = centerY + Math.sin(angle * Math.PI / 180) * radius;
-            blocks.push({ x, y, width: 8, height: 8, color: '#FFD700', health: 1 });
+            blocks.push({ x, y, width: blockSize, height: blockSize, color: '#FFD700', health: 1 });
         }
         
         // Глаза
-        blocks.push({ x: centerX - 30, y: centerY - 20, width: 15, height: 15, color: '#000', health: 1 });
-        blocks.push({ x: centerX + 30, y: centerY - 20, width: 15, height: 15, color: '#000', health: 1 });
+        const eyeSize = Math.max(8, blockSize * 1.5);
+        blocks.push({ x: centerX - 25, y: centerY - 15, width: eyeSize, height: eyeSize, color: '#000', health: 1 });
+        blocks.push({ x: centerX + 25, y: centerY - 15, width: eyeSize, height: eyeSize, color: '#000', health: 1 });
         
         // Улыбка
-        for (let angle = 200; angle < 340; angle += 10) {
-            const x = centerX + Math.cos(angle * Math.PI / 180) * 60;
-            const y = centerY + Math.sin(angle * Math.PI / 180) * 60;
-            blocks.push({ x, y, width: 6, height: 6, color: '#000', health: 1 });
+        for (let angle = 200; angle < 340; angle += 12) {
+            const x = centerX + Math.cos(angle * Math.PI / 180) * (radius * 0.6);
+            const y = centerY + Math.sin(angle * Math.PI / 180) * (radius * 0.6);
+            blocks.push({ x, y, width: blockSize * 0.8, height: blockSize * 0.8, color: '#000', health: 1 });
         }
         
         return blocks;
@@ -126,17 +245,18 @@ class VectorArkanoid {
         const blocks = [];
         const centerX = this.width / 2;
         const centerY = this.height / 3;
+        const blockSize = Math.max(4, this.width / 100);
         
-        for (let angle = 0; angle < 360; angle += 5) {
+        for (let angle = 0; angle < 360; angle += 8) {
             const t = angle * Math.PI / 180;
             const x = 16 * Math.pow(Math.sin(t), 3);
             const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
             
             blocks.push({
-                x: centerX - x * 3,
-                y: centerY - y * 3,
-                width: 6,
-                height: 6,
+                x: centerX - x * 2.5,
+                y: centerY - y * 2.5,
+                width: blockSize,
+                height: blockSize,
                 color: '#FF6B6B',
                 health: 1
             });
@@ -150,8 +270,9 @@ class VectorArkanoid {
         const centerX = this.width / 2;
         const centerY = this.height / 3;
         const points = 5;
-        const outerRadius = 80;
-        const innerRadius = 40;
+        const outerRadius = Math.min(60, this.width / 6);
+        const innerRadius = outerRadius * 0.5;
+        const blockSize = Math.max(4, this.width / 100);
         
         for (let i = 0; i <= points * 2; i++) {
             const radius = i % 2 === 0 ? outerRadius : innerRadius;
@@ -161,8 +282,8 @@ class VectorArkanoid {
             
             blocks.push({
                 x, y,
-                width: 8,
-                height: 8,
+                width: blockSize,
+                height: blockSize,
                 color: '#4ECDC4',
                 health: 1
             });
@@ -175,7 +296,7 @@ class VectorArkanoid {
         const drawings = JSON.parse(localStorage.getItem('sampleDrawings') || '{}');
         if (drawings[key]) {
             this.currentDrawing = drawings[key];
-            this.blocks = [...this.currentDrawing.blocks];
+            this.redrawBlocks();
             this.draw();
         }
     }
@@ -190,7 +311,7 @@ class VectorArkanoid {
                     try {
                         const drawing = JSON.parse(event.target.result);
                         this.currentDrawing = drawing;
-                        this.blocks = [...drawing.blocks];
+                        this.redrawBlocks();
                         this.draw();
                     } catch (error) {
                         alert('Ошибка загрузки файла: ' + error.message);
@@ -221,8 +342,8 @@ class VectorArkanoid {
     resetBall() {
         this.ball.x = this.width / 2;
         this.ball.y = this.height - 50;
-        this.ball.dx = 5 * (Math.random() > 0.5 ? 1 : -1);
-        this.ball.dy = -5;
+        this.ball.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
+        this.ball.dy = -4;
     }
     
     update() {
@@ -257,7 +378,7 @@ class VectorArkanoid {
             this.ball.dy > 0) {
             
             const hitPos = (this.ball.x - (this.paddle.x + this.paddle.width / 2)) / (this.paddle.width / 2);
-            this.ball.dx = hitPos * 8;
+            this.ball.dx = hitPos * 6;
             this.ball.dy *= -1;
         }
         
@@ -325,16 +446,17 @@ class VectorArkanoid {
         // Отрисовка текста, если игра не запущена
         if (!this.gameState.isRunning) {
             this.ctx.fillStyle = 'white';
-            this.ctx.font = '24px Arial';
+            this.ctx.font = `bold ${Math.max(16, this.width / 25)}px Arial`;
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('Выберите рисунок и нажмите "Начать игру"', this.width / 2, this.height / 2);
+            this.ctx.fillText('Выберите рисунок и нажмите "Старт"', this.width / 2, this.height / 2);
         }
         
         if (this.gameState.isPaused) {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             this.ctx.fillRect(0, 0, this.width, this.height);
             this.ctx.fillStyle = 'white';
-            this.ctx.font = '36px Arial';
+            this.ctx.font = `bold ${Math.max(24, this.width / 20)}px Arial`;
+            this.ctx.textAlign = 'center';
             this.ctx.fillText('ПАУЗА', this.width / 2, this.height / 2);
         }
     }
@@ -350,19 +472,23 @@ class VectorArkanoid {
         this.gameState.score += 100;
         this.updateUI();
         
-        alert(`Уровень ${this.gameState.level - 1} пройден!`);
-        
-        // Перезагрузка рисунка для нового уровня
-        if (this.currentDrawing) {
-            this.blocks = [...this.currentDrawing.blocks];
-            this.resetBall();
-        }
+        setTimeout(() => {
+            alert(`Уровень ${this.gameState.level - 1} пройден!`);
+            
+            // Перезагрузка рисунка для нового уровня
+            if (this.currentDrawing) {
+                this.redrawBlocks();
+                this.resetBall();
+            }
+        }, 500);
     }
     
     gameOver() {
         this.gameState.isRunning = false;
-        alert(`Игра окончена! Ваш счет: ${this.gameState.score}`);
-        this.resetGame();
+        setTimeout(() => {
+            alert(`Игра окончена! Ваш счет: ${this.gameState.score}`);
+            this.resetGame();
+        }, 500);
     }
     
     resetGame() {
@@ -376,7 +502,7 @@ class VectorArkanoid {
         this.updateUI();
         
         if (this.currentDrawing) {
-            this.blocks = [...this.currentDrawing.blocks];
+            this.redrawBlocks();
         }
         this.resetBall();
     }
@@ -392,3 +518,16 @@ class VectorArkanoid {
 window.addEventListener('load', () => {
     new VectorArkanoid();
 });
+
+// Предотвращение стандартного поведения браузера для касаний
+document.addEventListener('touchstart', function(e) {
+    if (e.target.tagName !== 'CANVAS') {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+    if (e.target.tagName !== 'CANVAS') {
+        e.preventDefault();
+    }
+}, { passive: false });
