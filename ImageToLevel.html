@@ -295,7 +295,7 @@
                     <label>Постеризация цветов: <span id="posterizationValue" class="range-value">8</span> цветов</label>
                     <input type="range" id="posterization" min="2" max="16" value="8">
                     
-                    <label>Объединение блоков: <span id="optimizationValue" class="range-value">5</span></label>
+                    <label>Агрессивность объединения: <span id="optimizationValue" class="range-value">5</span></label>
                     <input type="range" id="optimizationThreshold" min="1" max="10" value="5">
                     
                     <button id="optimizeLevel" class="optimize-btn" disabled>⚡ Оптимизировать уровень</button>
@@ -398,6 +398,8 @@
                 this.clearCanvas(this.imageCanvas, this.imageCtx);
                 this.clearCanvas(this.vectorCanvas, this.vectorCtx);
             }
+            
+            // ... (остальные методы loadImage, resizeImage, drawImagePreview остаются без изменений)
             
             clearCanvas(canvas, ctx) {
                 ctx.fillStyle = '#f0f0f0';
@@ -528,6 +530,8 @@
                 document.getElementById('copyJsonBtn').disabled = false;
                 document.getElementById('optimizeLevel').disabled = false;
             }
+            
+            // ... (методы processImage, floodFillBackgroundFromEdges, floodFill, getPixelColor, colorsAreSimilar, componentToHex остаются без изменений)
             
             processImage() {
                 console.log('Обработка изображения...');
@@ -788,8 +792,8 @@
                 // 1. Постеризация цветов
                 this.posterizeColors();
                 
-                // 2. Расширенное объединение блоков
-                this.advancedMergeBlocks();
+                // 2. Умное объединение блоков с учетом параметра агрессивности
+                this.smartMergeBlocks();
                 
                 const afterOptimization = this.blocks.length;
                 
@@ -798,7 +802,8 @@
                 
                 const stats = document.getElementById('generationStats');
                 stats.innerHTML += `<br>После оптимизации: ${afterOptimization}<br>
-                    Общая экономия: ${Math.round((1 - afterOptimization/beforeOptimization) * 100)}%`;
+                    Общая экономия: ${Math.round((1 - afterOptimization/beforeOptimization) * 100)}%<br>
+                    Агрессивность: ${this.settings.optimizationThreshold}`;
                 
                 status.textContent = `После оптимизации: ${afterOptimization} блоков (было ${beforeOptimization})`;
                 status.className = 'status success';
@@ -834,15 +839,18 @@
                 const groups = [];
                 const used = new Set();
                 
+                // Настраиваем чувствительность группировки в зависимости от параметра оптимизации
+                const groupingSensitivity = 10 + (this.settings.optimizationThreshold * 4);
+                
                 colors.forEach(color => {
                     if (used.has(color)) return;
                     
                     const group = [color];
                     used.add(color);
                     
-                    // Ищем похожие цвета
+                    // Ищем похожие цвета с учетом агрессивности
                     colors.forEach(otherColor => {
-                        if (!used.has(otherColor) && this.colorsAreSimilar(color, otherColor, 30)) {
+                        if (!used.has(otherColor) && this.colorsAreSimilar(color, otherColor, groupingSensitivity)) {
                             group.push(otherColor);
                             used.add(otherColor);
                         }
@@ -892,6 +900,95 @@
                 return groups;
             }
             
+            smartMergeBlocks() {
+                console.log('Умное объединение блоков...');
+                console.log('Агрессивность:', this.settings.optimizationThreshold);
+                
+                // Количество проходов зависит от агрессивности
+                const passes = Math.max(1, Math.floor(this.settings.optimizationThreshold / 2));
+                
+                for (let pass = 0; pass < passes; pass++) {
+                    const beforePass = this.blocks.length;
+                    
+                    // Настраиваем параметры объединения в зависимости от агрессивности
+                    const mergeSensitivity = 20 + (this.settings.optimizationThreshold * 8);
+                    
+                    this.blocks = this.mergeBlocksWithTolerance(this.blocks, mergeSensitivity);
+                    
+                    const afterPass = this.blocks.length;
+                    console.log(`Проход ${pass + 1}: ${beforePass} -> ${afterPass} блоков`);
+                    
+                    if (beforePass === afterPass) break; // Если больше нечего объединять
+                }
+            }
+            
+            mergeBlocksWithTolerance(blocks, sensitivity) {
+                if (blocks.length === 0) return [];
+                
+                // Сортируем блоки для последовательной обработки
+                const sortedBlocks = [...blocks].sort((a, b) => {
+                    if (a.y !== b.y) return a.y - b.y;
+                    return a.x - b.x;
+                });
+                
+                const merged = [];
+                const used = new Set();
+                
+                for (let i = 0; i < sortedBlocks.length; i++) {
+                    if (used.has(i)) continue;
+                    
+                    let currentBlock = sortedBlocks[i];
+                    used.add(i);
+                    
+                    // Ищем блоки для объединения с учетом толерантности к цвету
+                    for (let j = i + 1; j < sortedBlocks.length; j++) {
+                        if (used.has(j)) continue;
+                        
+                        const candidate = sortedBlocks[j];
+                        
+                        // Проверяем возможность объединения с учетом агрессивности
+                        if (this.canMergeWithTolerance(currentBlock, candidate, sensitivity)) {
+                            currentBlock = this.mergeToRectangle(currentBlock, candidate);
+                            used.add(j);
+                        }
+                    }
+                    
+                    merged.push(currentBlock);
+                }
+                
+                return merged;
+            }
+            
+            canMergeWithTolerance(block1, block2, sensitivity) {
+                // Проверяем похожесть цветов с учетом агрессивности
+                if (!this.colorsAreSimilar(block1.color, block2.color, sensitivity)) {
+                    return false;
+                }
+                
+                // Проверяем геометрическое расположение
+                const horizontallyAligned = block1.y === block2.y && block1.height === block2.height;
+                const verticallyAligned = block1.x === block2.x && block1.width === block2.width;
+                
+                const touchesHorizontally = horizontallyAligned && 
+                    (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
+                
+                const touchesVertically = verticallyAligned && 
+                    (block1.y + block1.height === block2.y || block2.y + block2.height === block1.y);
+                
+                // При высокой агрессивности разрешаем объединение близко расположенных блоков
+                if (this.settings.optimizationThreshold >= 7) {
+                    const closeHorizontally = horizontallyAligned && 
+                        Math.abs(block1.x + block1.width - block2.x) <= this.settings.blockSize * 2;
+                    
+                    const closeVertically = verticallyAligned && 
+                        Math.abs(block1.y + block1.height - block2.y) <= this.settings.blockSize * 2;
+                    
+                    return touchesHorizontally || touchesVertically || closeHorizontally || closeVertically;
+                }
+                
+                return touchesHorizontally || touchesVertically;
+            }
+            
             findClosestGroupColor(color, groups) {
                 let minDistance = Infinity;
                 let closestColor = color;
@@ -937,79 +1034,6 @@
                     Math.pow(g1 - g2, 2) + 
                     Math.pow(b1 - b2, 2)
                 );
-            }
-            
-            advancedMergeBlocks() {
-                console.log('Расширенное объединение блоков...');
-                
-                let changed;
-                do {
-                    changed = false;
-                    const mergedBlocks = [];
-                    const used = new Set();
-                    
-                    for (let i = 0; i < this.blocks.length; i++) {
-                        if (used.has(i)) continue;
-                        
-                        let currentBlock = this.blocks[i];
-                        used.add(i);
-                        
-                        // Пытаемся объединить с максимальным количеством соседей
-                        for (let j = 0; j < this.blocks.length; j++) {
-                            if (used.has(j)) continue;
-                            
-                            const candidate = this.blocks[j];
-                            
-                            if (this.canAdvancedMerge(currentBlock, candidate)) {
-                                currentBlock = this.mergeToRectangle(currentBlock, candidate);
-                                used.add(j);
-                                changed = true;
-                            }
-                        }
-                        
-                        mergedBlocks.push(currentBlock);
-                    }
-                    
-                    this.blocks = mergedBlocks;
-                } while (changed && this.blocks.length > 1);
-            }
-            
-            canAdvancedMerge(block1, block2) {
-                if (block1.color !== block2.color) return false;
-                
-                // Проверяем различные варианты объединения
-                const horizontallyAligned = block1.y === block2.y && block1.height === block2.height;
-                const verticallyAligned = block1.x === block2.x && block1.width === block2.width;
-                
-                const touchesHorizontally = horizontallyAligned && 
-                    (block1.x + block1.width === block2.x || block2.x + block2.width === block1.x);
-                
-                const touchesVertically = verticallyAligned && 
-                    (block1.y + block1.height === block2.y || block2.y + block2.height === block1.y);
-                
-                // Также проверяем объединение угловых блоков
-                const cornerMerge = this.canCornerMerge(block1, block2);
-                
-                return touchesHorizontally || touchesVertically || cornerMerge;
-            }
-            
-            canCornerMerge(block1, block2) {
-                // Проверяем возможность объединения блоков, которые касаются углами
-                const xOverlap = 
-                    (block1.x >= block2.x && block1.x < block2.x + block2.width) ||
-                    (block2.x >= block1.x && block2.x < block1.x + block1.width);
-                
-                const yOverlap = 
-                    (block1.y >= block2.y && block1.y < block2.y + block2.height) ||
-                    (block2.y >= block1.y && block2.y < block1.y + block1.height);
-                
-                const touchesCorner = 
-                    (block1.x + block1.width === block2.x && block1.y + block1.height === block2.y) ||
-                    (block2.x + block2.width === block1.x && block2.y + block2.height === block1.y) ||
-                    (block1.x === block2.x + block2.width && block1.y + block1.height === block2.y) ||
-                    (block2.x === block1.x + block1.width && block2.y + block2.height === block1.y);
-                
-                return !xOverlap && !yOverlap && touchesCorner;
             }
             
             drawVectorPreview() {
