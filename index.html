@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Векторный Арканоид</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>Векторный Арканоид</h1>
+            <div class="controls">
+                <button id="loadDrawing">Загрузить рисунок</button>
+                <select id="drawingSelect">
+                    <option value="">Выберите рисунок</option>
+                </select>
+                <div class="score">Счет: <span id="score">0</span></div>
+            </div>
+        </div>
+        
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+        
+        <div class="game-info">
+            <div>Жизни: <span id="lives">3</span></div>
+            <div>Уровень: <span id="level">1</span></div>
+            <button id="startBtn">Начать игру</button>
+            <button id="pauseBtn">Пауза</button>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    
+    <script src="script.js"></script>
+</body>
+</html>
