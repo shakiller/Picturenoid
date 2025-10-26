@@ -138,6 +138,14 @@
             background: #45b7af;
         }
 
+        .copy-btn {
+            background: #ffa726;
+        }
+
+        .copy-btn:hover {
+            background: #ff9800;
+        }
+
         .file-input {
             margin: 10px 0;
             color: white;
@@ -166,9 +174,42 @@
             color: #90caf9;
         }
 
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .controls, .preview-area {
                 grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .button-group button {
+                width: 100%;
             }
         }
     </style>
@@ -197,8 +238,11 @@
                 <label>Минимальный размер: <span id="minSizeValue" class="range-value">2</span> блоков</label>
                 <input type="range" id="minSize" min="1" max="20" value="2">
                 
-                <button id="generateLevel" disabled>Сгенерировать уровень</button>
-                <button id="downloadJson" class="download-btn" disabled>Скачать JSON</button>
+                <div class="button-group">
+                    <button id="generateLevel" disabled>Сгенерировать уровень</button>
+                    <button id="downloadJson" class="download-btn" disabled>💾 Скачать JSON</button>
+                    <button id="copyJsonBtn" class="copy-btn" disabled>📋 Копировать JSON</button>
+                </div>
             </div>
         </div>
 
@@ -237,6 +281,7 @@
                 
                 this.currentImage = null;
                 this.blocks = [];
+                this.jsonData = null;
                 
                 this.init();
             }
@@ -272,6 +317,10 @@
                 
                 document.getElementById('downloadJson').addEventListener('click', () => {
                     this.downloadJson();
+                });
+                
+                document.getElementById('copyJsonBtn').addEventListener('click', () => {
+                    this.copyJsonToClipboard();
                 });
                 
                 // Инициализация canvas
@@ -366,6 +415,7 @@
                 status.textContent = `Сгенерировано ${this.blocks.length} блоков`;
                 status.className = 'status success';
                 document.getElementById('downloadJson').disabled = false;
+                document.getElementById('copyJsonBtn').disabled = false;
                 
                 console.log('Генерация завершена. Блоков:', this.blocks.length);
             }
@@ -594,6 +644,65 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+            }
+            
+            async copyJsonToClipboard() {
+                if (!this.jsonData) {
+                    this.showNotification('Сначала сгенерируйте уровень!', 'error');
+                    return;
+                }
+                
+                try {
+                    // Современный API для копирования
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(this.jsonData);
+                        this.showNotification('✅ JSON скопирован в буфер обмена!');
+                    } else {
+                        // Старый метод как запасной вариант
+                        this.fallbackCopyTextToClipboard(this.jsonData);
+                    }
+                } catch (err) {
+                    console.error('Ошибка при копировании: ', err);
+                    this.fallbackCopyTextToClipboard(this.jsonData);
+                }
+            }
+            
+            fallbackCopyTextToClipboard(text) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        this.showNotification('✅ JSON скопирован в буфер обмена!');
+                    } else {
+                        throw new Error('Не удалось скопировать текст');
+                    }
+                } catch (err) {
+                    console.error('Ошибка при копировании: ', err);
+                    this.showNotification('❌ Не удалось скопировать. Скопируйте текст вручную.', 'error');
+                }
+            }
+            
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = 'notification';
+                notification.style.background = type === 'error' ? '#f44336' : '#4CAF50';
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 3000);
             }
         }
         
