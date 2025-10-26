@@ -174,6 +174,11 @@
             color: #90caf9;
         }
 
+        .warning {
+            background: rgba(255, 152, 0, 0.3);
+            color: #ffcc80;
+        }
+
         .notification {
             position: fixed;
             top: 20px;
@@ -197,6 +202,12 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 10px;
+        }
+
+        .size-info {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
         }
 
         @media (max-width: 768px) {
@@ -224,6 +235,7 @@
                 <input type="file" id="imageInput" accept="image/*" class="file-input">
                 <button id="loadImage">Загрузить изображение</button>
                 <div id="imageStatus" class="status info">Выберите изображение для генерации уровня</div>
+                <div class="size-info">⚠️ Максимальный размер: 600px в ширину (изображение будет уменьшено)</div>
             </div>
 
             <div class="control-group">
@@ -282,6 +294,7 @@
                 this.currentImage = null;
                 this.blocks = [];
                 this.jsonData = null;
+                this.MAX_WIDTH = 600; // Максимальная ширина изображения
                 
                 this.init();
             }
@@ -348,11 +361,20 @@
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        console.log('Изображение загружено:', img.width, 'x', img.height);
-                        this.currentImage = img;
+                        console.log('Исходное изображение:', img.width, 'x', img.height);
+                        
+                        // Проверяем размер и уменьшаем если нужно
+                        if (img.width > this.MAX_WIDTH) {
+                            this.currentImage = this.resizeImage(img, this.MAX_WIDTH);
+                            status.textContent = `Изображение уменьшено: ${this.currentImage.width}x${this.currentImage.height} (было ${img.width}x${img.height})`;
+                            status.className = 'status warning';
+                        } else {
+                            this.currentImage = img;
+                            status.textContent = `Изображение загружено: ${img.width}x${img.height}`;
+                            status.className = 'status success';
+                        }
+                        
                         this.drawImagePreview();
-                        status.textContent = `Изображение загружено: ${img.width}x${img.height}`;
-                        status.className = 'status success';
                         document.getElementById('generateLevel').disabled = false;
                     };
                     img.onerror = () => {
@@ -369,6 +391,29 @@
                 reader.readAsDataURL(file);
             }
             
+            resizeImage(image, maxWidth) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Рассчитываем новые размеры с сохранением пропорций
+                const scale = maxWidth / image.width;
+                const newWidth = maxWidth;
+                const newHeight = Math.round(image.height * scale);
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // Рисуем уменьшенное изображение
+                ctx.drawImage(image, 0, 0, newWidth, newHeight);
+                
+                // Создаем новое изображение из canvas
+                const resizedImage = new Image();
+                resizedImage.src = canvas.toDataURL();
+                
+                console.log('Изображение уменьшено до:', newWidth, 'x', newHeight);
+                return resizedImage;
+            }
+            
             drawImagePreview() {
                 if (!this.currentImage) return;
                 
@@ -378,7 +423,7 @@
                 // Очистка canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Масштабирование изображения под canvas
+                // Масштабирование изображения под canvas предпросмотра
                 const scale = Math.min(
                     canvas.width / this.currentImage.width,
                     canvas.height / this.currentImage.height
@@ -427,7 +472,7 @@
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
-                // Устанавливаем размер как у исходного изображения
+                // Устанавливаем размер как у текущего изображения (уже уменьшенного)
                 tempCanvas.width = this.currentImage.width;
                 tempCanvas.height = this.currentImage.height;
                 
@@ -441,6 +486,7 @@
                 const blockSize = this.settings.blockSize;
                 const sensitivity = this.settings.sensitivity;
                 
+                console.log('Обработка изображения размером:', tempCanvas.width, 'x', tempCanvas.height);
                 console.log('Размер блока:', blockSize, 'Чувствительность:', sensitivity);
                 
                 // Простой алгоритм: проверяем каждый блок
