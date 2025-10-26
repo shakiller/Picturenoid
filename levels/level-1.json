@@ -2,14 +2,13 @@
     "name": "Теремок",
     "blocks": [
         {"x": 150, "y": 200, "width": 100, "height": 80, "color": "#8B4513", "health": 1},
-        {"x": 170, "y": 180, "width": 60, "height": 40, "color": "#654321", "health": 1},
-        {"x": 180, "y": 220, "width": 20, "height": 40, "color": "#A0522D", "health": 1},
-        {"x": 240, "y": 220, "width": 20, "height": 40, "color": "#A0522D", "health": 1},
-        {"x": 200, "y": 240, "width": 10, "height": 10, "color": "#87CEEB", "health": 1},
-        {"x": 230, "y": 240, "width": 10, "height": 10, "color": "#87CEEB", "health": 1},
-        {"x": 215, "y": 260, "width": 10, "height": 10, "color": "#FFD700", "health": 1},
-        {"x": 140, "y": 280, "width": 120, "height": 20, "color": "#228B22", "health": 1},
-        {"x": 130, "y": 300, "width": 140, "height": 15, "color": "#32CD32", "health": 1},
-        {"x": 120, "y": 315, "width": 160, "height": 10, "color": "#3CB371", "health": 1}
+        {"x": 150, "y": 180, "width": 100, "height": 20, "color": "#654321", "health": 1},
+        {"x": 170, "y": 140, "width": 60, "height": 40, "color": "#A0522D", "health": 1},
+        {"x": 160, "y": 220, "width": 30, "height": 40, "color": "#5D4037", "health": 1},
+        {"x": 210, "y": 220, "width": 30, "height": 40, "color": "#5D4037", "health": 1},
+        {"x": 170, "y": 240, "width": 20, "height": 20, "color": "#87CEEB", "health": 1},
+        {"x": 210, "y": 240, "width": 20, "height": 20, "color": "#87CEEB", "health": 1},
+        {"x": 140, "y": 280, "width": 120, "height": 20, "color": "#388E3C", "health": 1},
+        {"x": 130, "y": 300, "width": 140, "height": 15, "color": "#4CAF50", "health": 1}
     ]
 }
