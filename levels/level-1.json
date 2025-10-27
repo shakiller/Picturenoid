@@ -1,142 +1,165 @@
 {
   "name": "Хаски",
-  "shapes": [
+  "physics": {
+    "ball": {
+      "radius": 5,
+      "initialPosition": {"x": 50, "y": 50},
+      "initialVelocity": {"x": 3, "y": 2}
+    }
+  },
+  "collisionShapes": [
     {
       "type": "polygon",
+      "id": "left_ear_outer",
       "points": [
         {"x": 70, "y": 40},
         {"x": 100, "y": -20},
         {"x": 130, "y": 40}
       ],
-      "color": "#999",
-      "layer": 1
+      "collisionType": "solid",
+      "bounceFactor": 0.8
     },
     {
       "type": "polygon",
+      "id": "left_ear_inner",
       "points": [
         {"x": 85, "y": 30},
         {"x": 100, "y": -5},
         {"x": 115, "y": 30}
       ],
-      "color": "pink",
-      "layer": 2
+      "collisionType": "solid",
+      "bounceFactor": 0.7
     },
     {
       "type": "polygon",
+      "id": "right_ear_outer",
       "points": [
         {"x": 170, "y": 40},
         {"x": 140, "y": -20},
         {"x": 110, "y": 40}
       ],
-      "color": "#999",
-      "layer": 1
+      "collisionType": "solid",
+      "bounceFactor": 0.8
     },
     {
-      "type": "polygon", 
+      "type": "polygon",
+      "id": "right_ear_inner", 
       "points": [
         {"x": 155, "y": 30},
         {"x": 140, "y": -5},
         {"x": 125, "y": 30}
       ],
-      "color": "pink",
-      "layer": 2
+      "collisionType": "solid",
+      "bounceFactor": 0.7
     },
     {
       "type": "circle",
+      "id": "head",
       "x": 150,
       "y": 120,
       "radius": 80,
-      "color": "#fff",
-      "layer": 3
+      "collisionType": "solid",
+      "bounceFactor": 0.9
     },
     {
       "type": "ellipse",
+      "id": "mask",
       "x": 150,
       "y": 120,
       "radiusX": 50,
       "radiusY": 80,
-      "color": "#999",
-      "layer": 4
+      "collisionType": "solid",
+      "bounceFactor": 0.85
     },
     {
       "type": "ellipse",
+      "id": "left_eye",
       "x": 120,
       "y": 110,
       "radiusX": 10,
       "radiusY": 15,
-      "color": "#000",
-      "layer": 5
+      "collisionType": "solid",
+      "bounceFactor": 0.6
     },
     {
       "type": "ellipse",
+      "id": "right_eye",
       "x": 180,
       "y": 110,
       "radiusX": 10,
       "radiusY": 15,
-      "color": "#000",
-      "layer": 5
+      "collisionType": "solid",
+      "bounceFactor": 0.6
     },
     {
       "type": "circle",
+      "id": "nose",
       "x": 150,
       "y": 145,
       "radius": 8,
-      "color": "#000",
-      "layer": 6
+      "collisionType": "solid", 
+      "bounceFactor": 0.5
     },
     {
       "type": "arc",
+      "id": "tongue",
       "x": 150,
       "y": 165,
       "radiusX": 12,
       "radiusY": 8,
       "startAngle": 0,
       "endAngle": 3.14159,
-      "color": "pink",
-      "layer": 7
+      "collisionType": "bouncy",
+      "bounceFactor": 1.2
     },
     {
       "type": "ellipse",
+      "id": "body",
       "x": 150,
       "y": 250,
       "radiusX": 70,
       "radiusY": 50,
-      "color": "#ccc",
-      "layer": 8
+      "collisionType": "solid",
+      "bounceFactor": 0.8
     },
     {
-      "type": "ellipse",
+      "type": "ellipse", 
+      "id": "left_paw",
       "x": 110,
       "y": 300,
       "radiusX": 20,
       "radiusY": 12,
-      "color": "#fff",
-      "layer": 9
+      "collisionType": "solid",
+      "bounceFactor": 0.7
     },
     {
       "type": "ellipse",
+      "id": "right_paw",
       "x": 190,
       "y": 300,
       "radiusX": 20,
       "radiusY": 12,
-      "color": "#fff",
-      "layer": 9
+      "collisionType": "solid",
+      "bounceFactor": 0.7
     },
     {
       "type": "ellipse",
+      "id": "tail",
       "x": 220,
       "y": 270,
       "radiusX": 30,
       "radiusY": 15,
       "rotation": -0.5,
-      "color": "#ccc",
-      "layer": 10
+      "collisionType": "solid",
+      "bounceFactor": 0.75
     }
   ],
   "renderOrder": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  "metadata": {
-    "canvasWidth": 300,
-    "canvasHeight": 350,
-    "supportedPrimitives": ["rectangle", "circle", "ellipse", "polygon", "arc", "path"]
+  "bounds": {
+    "left": 0,
+    "top": 0,
+    "right": 300,
+    "bottom": 350,
+    "bounceFactor": 0.95
   }
 }
