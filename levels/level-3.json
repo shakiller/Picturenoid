@@ -1,0 +1,87 @@
+{
+  "name": "Космос",
+  "ball": {
+    "radius": 8,
+    "initialPosition": {"x": 200, "y": 400},
+    "initialVelocity": {"x": 6, "y": -7}
+  },
+  "paddle": {
+    "width": 75,
+    "height": 15,
+    "speed": 8,
+    "color": "#9c27b0"
+  },
+  "shapes": [
+    {
+      "type": "circle",
+      "id": "planet1",
+      "x": 100,
+      "y": 80,
+      "radius": 30,
+      "color": "#ff9800",
+      "health": 2,
+      "score": 25
+    },
+    {
+      "type": "circle",
+      "id": "planet2",
+      "x": 300,
+      "y": 100,
+      "radius": 25,
+      "color": "#4caf50",
+      "health": 2,
+      "score": 20
+    },
+    {
+      "type": "ellipse",
+      "id": "comet",
+      "x": 200,
+      "y": 70,
+      "radiusX": 50,
+      "radiusY": 15,
+      "color": "#00bcd4",
+      "health": 3,
+      "score": 30
+    },
+    {
+      "type": "polygon",
+      "id": "rocket",
+      "points": [
+        {"x": 150, "y": 180},
+        {"x": 170, "y": 150},
+        {"x": 190, "y": 180},
+        {"x": 180, "y": 200},
+        {"x": 160, "y": 200}
+      ],
+      "color": "#f44336",
+      "health": 2,
+      "score": 25
+    },
+    {
+      "type": "polygon",
+      "id": "star",
+      "points": [
+        {"x": 250, "y": 180},
+        {"x": 260, "y": 160},
+        {"x": 270, "y": 180},
+        {"x": 290, "y": 185},
+        {"x": 270, "y": 195},
+        {"x": 280, "y": 215},
+        {"x": 260, "y": 205},
+        {"x": 240, "y": 215},
+        {"x": 250, "y": 195},
+        {"x": 230, "y": 185}
+      ],
+      "color": "#ffeb3b",
+      "health": 3,
+      "score": 40
+    }
+  ],
+  "bounds": {
+    "left": 0,
+    "top": 0,
+    "right": 400,
+    "bottom": 500,
+    "bounceFactor": 1.0
+  }
+}
