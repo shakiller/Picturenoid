@@ -22,34 +22,36 @@
       padding: 10px;
     }
     .container {
-      max-width: 1200px;
+      max-width: 100%;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
     header {
-      grid-column: 1 / -1;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     h1 {
-      font-size: 2rem;
-      margin-bottom: 10px;
+      font-size: 1.5rem;
+      margin-bottom: 5px;
       text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
     }
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      grid-column: 1 / -1;
+      gap: 5px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
     }
     .tab {
-      padding: 10px 20px;
+      padding: 8px 12px;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.3s;
+      white-space: nowrap;
+      font-size: 0.9rem;
     }
     .tab.active {
       background: #4a4af0;
@@ -59,7 +61,9 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-      height: 600px;
+      width: 100%;
+      aspect-ratio: 4/5; /* Сохраняем пропорции 4:5 как в игре */
+      position: relative;
     }
     canvas {
       display: block;
@@ -69,41 +73,46 @@
     .editor-panel {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      padding: 20px;
+      padding: 15px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       overflow-y: auto;
-      max-height: 600px;
+      max-height: 50vh;
     }
     .section {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
     .section h3 {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       color: #4a4af0;
+      font-size: 1rem;
     }
     .form-group {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     label {
       display: block;
-      margin-bottom: 5px;
-      font-size: 0.9rem;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
       color: #ccc;
     }
     input, select, textarea {
       width: 100%;
-      padding: 8px;
+      padding: 6px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 4px;
       background: rgba(0, 0, 0, 0.3);
       color: white;
       font-size: 0.9rem;
     }
+    input[type="color"] {
+      height: 40px;
+      padding: 2px;
+    }
     button {
-      padding: 10px 15px;
+      padding: 8px 12px;
       background: #4a4af0;
       color: white;
       border: none;
@@ -114,6 +123,7 @@
       transition: all 0.3s;
       margin-right: 5px;
       margin-bottom: 5px;
+      width: 100%;
     }
     button:hover {
       background: #5a5aff;
@@ -132,17 +142,21 @@
       background: #5aff5a;
     }
     .shape-list {
-      max-height: 200px;
+      max-height: 150px;
       overflow-y: auto;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 5px;
     }
     .shape-item {
-      padding: 8px;
+      padding: 6px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 4px;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       cursor: pointer;
       transition: all 0.3s;
+      font-size: 0.8rem;
     }
     .shape-item:hover {
       background: rgba(255, 255, 255, 0.1);
@@ -153,22 +167,27 @@
     }
     .point-inputs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr auto;
       gap: 5px;
       margin-bottom: 5px;
+      align-items: center;
     }
     .point-inputs input {
       width: 100%;
     }
+    .point-inputs button {
+      width: auto;
+      padding: 4px 8px;
+    }
     .json-output {
       background: rgba(0, 0, 0, 0.5);
       border-radius: 4px;
-      padding: 10px;
-      margin-top: 10px;
-      max-height: 200px;
+      padding: 8px;
+      margin-top: 8px;
+      max-height: 150px;
       overflow-y: auto;
       font-family: monospace;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       white-space: pre-wrap;
     }
     .hidden {
@@ -176,38 +195,80 @@
     }
     .instructions {
       background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
+      padding: 12px;
       border-radius: 10px;
-      margin-top: 20px;
-      grid-column: 1 / -1;
+      margin-top: 15px;
+      font-size: 0.8rem;
     }
     .instructions h2 {
-      margin-bottom: 10px;
-      font-size: 1.2rem;
+      margin-bottom: 8px;
+      font-size: 1rem;
     }
     .instructions ul {
-      margin-left: 20px;
+      margin-left: 15px;
     }
     .instructions li {
-      margin-bottom: 5px;
+      margin-bottom: 4px;
+    }
+    
+    /* Горизонтальная ориентация для планшетов и десктопов */
+    @media (min-width: 768px) {
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 1200px;
+      }
+      header {
+        grid-column: 1 / -1;
+      }
+      .tabs {
+        grid-column: 1 / -1;
+      }
+      .preview-container {
+        height: 500px;
+        aspect-ratio: unset;
+      }
+      .editor-panel {
+        max-height: 500px;
+      }
+      .instructions {
+        grid-column: 1 / -1;
+      }
+      button {
+        width: auto;
+      }
+    }
+    
+    /* Улучшения для очень маленьких экранов */
+    @media (max-width: 360px) {
+      .tabs {
+        font-size: 0.8rem;
+      }
+      .tab {
+        padding: 6px 8px;
+      }
+      .section {
+        padding: 8px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Редактор уровней - Физика Отскоков</h1>
+      <h1>Редактор уровней</h1>
       <p>Создавайте и редактируйте уровни для игры</p>
     </header>
     
     <div class="tabs">
-      <div class="tab active" data-tab="level">Настройки уровня</div>
+      <div class="tab active" data-tab="level">Уровень</div>
       <div class="tab" data-tab="shapes">Фигуры</div>
       <div class="tab" data-tab="export">Экспорт</div>
     </div>
     
     <div class="preview-container">
-      <canvas id="previewCanvas" width="800" height="600"></canvas>
+      <canvas id="previewCanvas" width="400" height="500"></canvas>
     </div>
     
     <div class="editor-panel">
@@ -229,11 +290,11 @@
           </div>
           <div class="form-group">
             <label for="ballX">Начальная позиция X</label>
-            <input type="number" id="ballX" value="200" min="0" max="800">
+            <input type="number" id="ballX" value="200" min="0" max="400">
           </div>
           <div class="form-group">
             <label for="ballY">Начальная позиция Y</label>
-            <input type="number" id="ballY" value="400" min="0" max="600">
+            <input type="number" id="ballY" value="400" min="0" max="500">
           </div>
           <div class="form-group">
             <label for="ballVX">Начальная скорость X</label>
@@ -308,11 +369,11 @@
           <div id="circleParams" class="shape-params">
             <div class="form-group">
               <label for="circleX">Центр X</label>
-              <input type="number" id="circleX" value="100" min="0" max="800">
+              <input type="number" id="circleX" value="100" min="0" max="400">
             </div>
             <div class="form-group">
               <label for="circleY">Центр Y</label>
-              <input type="number" id="circleY" value="100" min="0" max="600">
+              <input type="number" id="circleY" value="100" min="0" max="500">
             </div>
             <div class="form-group">
               <label for="circleRadius">Радиус</label>
@@ -324,11 +385,11 @@
           <div id="ellipseParams" class="shape-params hidden">
             <div class="form-group">
               <label for="ellipseX">Центр X</label>
-              <input type="number" id="ellipseX" value="200" min="0" max="800">
+              <input type="number" id="ellipseX" value="200" min="0" max="400">
             </div>
             <div class="form-group">
               <label for="ellipseY">Центр Y</label>
-              <input type="number" id="ellipseY" value="100" min="0" max="600">
+              <input type="number" id="ellipseY" value="100" min="0" max="500">
             </div>
             <div class="form-group">
               <label for="ellipseRadiusX">Радиус X</label>
@@ -359,11 +420,11 @@
           <div id="arcParams" class="shape-params hidden">
             <div class="form-group">
               <label for="arcX">Центр X</label>
-              <input type="number" id="arcX" value="300" min="0" max="800">
+              <input type="number" id="arcX" value="300" min="0" max="400">
             </div>
             <div class="form-group">
               <label for="arcY">Центр Y</label>
-              <input type="number" id="arcY" value="100" min="0" max="600">
+              <input type="number" id="arcY" value="100" min="0" max="500">
             </div>
             <div class="form-group">
               <label for="arcRadiusX">Радиус X</label>
@@ -406,7 +467,7 @@
           <h3>Импорт уровня</h3>
           <div class="form-group">
             <label for="importJson">Вставьте JSON для импорта:</label>
-            <textarea id="importJson" rows="10" placeholder='{"name": "Уровень", ...}'></textarea>
+            <textarea id="importJson" rows="6" placeholder='{"name": "Уровень", ...}'></textarea>
           </div>
           <button id="importJsonBtn">Импортировать уровень</button>
         </div>
@@ -417,7 +478,7 @@
       <h2>Инструкция по использованию редактора:</h2>
       <ul>
         <li>Используйте вкладки для навигации между разделами редактора</li>
-        <li>В разделе "Настройки уровня" задайте общие параметры уровня, мяча и платформы</li>
+        <li>В разделе "Уровень" задайте общие параметры уровня, мяча и платформы</li>
         <li>В разделе "Фигуры" создавайте и редактируйте фигуры на уровне</li>
         <li>В разделе "Экспорт" скопируйте или скачайте JSON-файл вашего уровня</li>
         <li>Все изменения отображаются в реальном времени в превью</li>
@@ -434,10 +495,40 @@
         this.currentLevel = this.getDefaultLevel();
         this.selectedShapeIndex = -1;
         
+        // Установим правильные размеры canvas для сохранения пропорций
+        this.setCanvasSize();
+        
         this.initEventListeners();
         this.updatePreview();
         this.updateShapeList();
         this.updateJsonOutput();
+        
+        // Обработчик изменения размера окна
+        window.addEventListener('resize', () => {
+          this.setCanvasSize();
+          this.updatePreview();
+        });
+      }
+      
+      setCanvasSize() {
+        // Сохраняем пропорции 4:5 как в игре
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Рассчитываем размеры с сохранением пропорций
+        const targetRatio = 400/500; // 4:5
+        const currentRatio = containerWidth / containerHeight;
+        
+        if (currentRatio > targetRatio) {
+          // Шире чем нужно - ограничиваем по высоте
+          this.canvas.height = containerHeight;
+          this.canvas.width = containerHeight * targetRatio;
+        } else {
+          // Уже чем нужно - ограничиваем по ширине
+          this.canvas.width = containerWidth;
+          this.canvas.height = containerWidth / targetRatio;
+        }
       }
       
       getDefaultLevel() {
@@ -458,8 +549,8 @@
           bounds: {
             left: 0,
             top: 0,
-            right: 800,
-            bottom: 600,
+            right: 400,
+            bottom: 500,
             bounceFactor: 1.0
           }
         };
@@ -581,19 +672,28 @@
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Масштабирование координат для правильного отображения
+        const scaleX = this.canvas.width / 400;
+        const scaleY = this.canvas.height / 500;
+        
         // Рисование платформы
         const paddle = this.currentLevel.paddle;
-        const paddleX = (this.canvas.width - paddle.width) / 2;
+        const paddleX = (this.canvas.width - paddle.width * scaleX) / 2;
         const paddleY = this.canvas.height - 30;
         
         this.ctx.fillStyle = paddle.color;
-        this.ctx.fillRect(paddleX, paddleY, paddle.width, paddle.height);
+        this.ctx.fillRect(paddleX, paddleY, paddle.width * scaleX, paddle.height * scaleY);
         
         // Рисование мяча
         const ball = this.currentLevel.ball;
         this.ctx.fillStyle = '#ff4444';
         this.ctx.beginPath();
-        this.ctx.arc(ball.initialPosition.x, ball.initialPosition.y, ball.radius, 0, Math.PI * 2);
+        this.ctx.arc(
+          ball.initialPosition.x * scaleX, 
+          ball.initialPosition.y * scaleY, 
+          ball.radius * Math.min(scaleX, scaleY), 
+          0, Math.PI * 2
+        );
         this.ctx.fill();
         
         // Рисование фигур
@@ -611,15 +711,21 @@
           switch (shape.type) {
             case 'circle':
               this.ctx.beginPath();
-              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+              this.ctx.arc(
+                shape.x * scaleX, 
+                shape.y * scaleY, 
+                shape.radius * Math.min(scaleX, scaleY), 
+                0, Math.PI * 2
+              );
               this.ctx.fill();
               this.ctx.stroke();
               break;
               
             case 'ellipse':
               this.ctx.save();
-              this.ctx.translate(shape.x, shape.y);
+              this.ctx.translate(shape.x * scaleX, shape.y * scaleY);
               this.ctx.rotate(shape.rotation || 0);
+              this.ctx.scale(scaleX, scaleY); // Масштабируем для сохранения пропорций
               this.ctx.beginPath();
               this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
               this.ctx.fill();
@@ -629,9 +735,9 @@
               
             case 'polygon':
               this.ctx.beginPath();
-              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+              this.ctx.moveTo(shape.points[0].x * scaleX, shape.points[0].y * scaleY);
               for (let i = 1; i < shape.points.length; i++) {
-                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+                this.ctx.lineTo(shape.points[i].x * scaleX, shape.points[i].y * scaleY);
               }
               this.ctx.closePath();
               this.ctx.fill();
@@ -640,8 +746,9 @@
               
             case 'arc':
               this.ctx.save();
-              this.ctx.translate(shape.x, shape.y);
+              this.ctx.translate(shape.x * scaleX, shape.y * scaleY);
               this.ctx.rotate(shape.rotation || 0);
+              this.ctx.scale(scaleX, scaleY); // Масштабируем для сохранения пропорций
               this.ctx.beginPath();
               this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
               this.ctx.fill();
@@ -873,8 +980,8 @@
           pointDiv.className = 'point-inputs';
           
           pointDiv.innerHTML = `
-            <input type="number" class="point-x" value="${point.x}" placeholder="X" min="0" max="800">
-            <input type="number" class="point-y" value="${point.y}" placeholder="Y" min="0" max="600">
+            <input type="number" class="point-x" value="${point.x}" placeholder="X" min="0" max="400">
+            <input type="number" class="point-y" value="${point.y}" placeholder="Y" min="0" max="500">
             <button type="button" class="delete-point" data-index="${index}">✕</button>
           `;
           
