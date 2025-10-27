@@ -56,7 +56,6 @@
     }
     canvas {
       display: block;
-      background: #111;
       width: 100%;
       height: 100%;
     }
@@ -1109,8 +1108,14 @@
       }
       
       draw() {
-        // Очистка холста
-        this.ctx.fillStyle = '#111';
+        // Создание градиента для фона
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, '#1a237e');
+        gradient.addColorStop(0.5, '#283593');
+        gradient.addColorStop(1, '#303f9f');
+        
+        // Очистка холста с градиентом
+        this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Рисование платформы с тенью
@@ -1209,7 +1214,7 @@
         this.ctx.shadowOffsetY = 0;
         
         // Рисование границ
-        this.ctx.strokeStyle = '#444';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
       }
