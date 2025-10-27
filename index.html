@@ -295,6 +295,7 @@
     class LevelLoader {
       constructor() {
         this.levels = {};
+        // Обновляем имена файлов на level-1.json, level-2.json и т.д.
         this.levelFiles = [
           'levels/level-1.json',
           'levels/level-2.json',
@@ -310,6 +311,7 @@
           for (let i = 0; i < this.levelFiles.length; i++) {
             loadingText.textContent = `Загрузка уровня ${i + 1} из ${this.levelFiles.length}...`;
             const level = await this.loadLevel(this.levelFiles[i]);
+            // Сохраняем с ключами level1, level2, level3 для совместимости
             const levelId = `level${i + 1}`;
             this.levels[levelId] = level;
           }
