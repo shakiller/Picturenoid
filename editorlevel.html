@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Редактор уровней - Физика Отскоков</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    body {
+      background: linear-gradient(135deg, #0c1445, #1a237e, #283593);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      min-height: 100vh;
+      padding: 10px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 20px;
+    }
+    header {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      grid-column: 1 / -1;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .tab.active {
+      background: #4a4af0;
+    }
+    .preview-container {
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      height: 600px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .editor-panel {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      overflow-y: auto;
+      max-height: 600px;
+    }
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .section h3 {
+      margin-bottom: 10px;
+      color: #4a4af0;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 0.9rem;
+    }
+    button {
+      padding: 10px 15px;
+      background: #4a4af0;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: bold;
+      transition: all 0.3s;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    button:hover {
+      background: #5a5aff;
+    }
+    button.delete {
+      background: #f04a4a;
+    }
+    button.delete:hover {
+      background: #ff5a5a;
+    }
+    button.export {
+      background: #4af04a;
+      color: #000;
+    }
+    button.export:hover {
+      background: #5aff5a;
+    }
+    .shape-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    .shape-item {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .shape-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .shape-item.active {
+      background: rgba(74, 74, 240, 0.3);
+      border-left: 3px solid #4a4af0;
+    }
+    .point-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .point-inputs input {
+      width: 100%;
+    }
+    .json-output {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+    }
+    .hidden {
+      display: none;
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      grid-column: 1 / -1;
+    }
+    .instructions h2 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    .instructions ul {
+      margin-left: 20px;
+    }
+    .instructions li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Редактор уровней - Физика Отскоков</h1>
+      <p>Создавайте и редактируйте уровни для игры</p>
+    </header>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="level">Настройки уровня</div>
+      <div class="tab" data-tab="shapes">Фигуры</div>
+      <div class="tab" data-tab="export">Экспорт</div>
+    </div>
+    
+    <div class="preview-container">
+      <canvas id="previewCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="editor-panel">
+      <!-- Настройки уровня -->
+      <div id="level-tab" class="tab-content">
+        <div class="section">
+          <h3>Общие настройки</h3>
+          <div class="form-group">
+            <label for="levelName">Название уровня</label>
+            <input type="text" id="levelName" value="Новый уровень">
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Мяч</h3>
+          <div class="form-group">
+            <label for="ballRadius">Радиус мяча</label>
+            <input type="number" id="ballRadius" value="8" min="1" max="20">
+          </div>
+          <div class="form-group">
+            <label for="ballX">Начальная позиция X</label>
+            <input type="number" id="ballX" value="200" min="0" max="800">
+          </div>
+          <div class="form-group">
+            <label for="ballY">Начальная позиция Y</label>
+            <input type="number" id="ballY" value="400" min="0" max="600">
+          </div>
+          <div class="form-group">
+            <label for="ballVX">Начальная скорость X</label>
+            <input type="number" id="ballVX" value="4" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="ballVY">Начальная скорость Y</label>
+            <input type="number" id="ballVY" value="-5" step="0.1">
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Платформа</h3>
+          <div class="form-group">
+            <label for="paddleWidth">Ширина платформы</label>
+            <input type="number" id="paddleWidth" value="80" min="20" max="200">
+          </div>
+          <div class="form-group">
+            <label for="paddleHeight">Высота платформы</label>
+            <input type="number" id="paddleHeight" value="15" min="5" max="50">
+          </div>
+          <div class="form-group">
+            <label for="paddleSpeed">Скорость платформы</label>
+            <input type="number" id="paddleSpeed" value="8" min="1" max="20">
+          </div>
+          <div class="form-group">
+            <label for="paddleColor">Цвет платформы</label>
+            <input type="color" id="paddleColor" value="#4a4af0">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Управление фигурами -->
+      <div id="shapes-tab" class="tab-content hidden">
+        <div class="section">
+          <h3>Список фигур</h3>
+          <div class="shape-list" id="shapeList">
+            <!-- Фигуры будут добавляться здесь -->
+          </div>
+          <button id="addShapeBtn">Добавить фигуру</button>
+        </div>
+        
+        <div class="section">
+          <h3>Настройки фигуры</h3>
+          <div class="form-group">
+            <label for="shapeType">Тип фигуры</label>
+            <select id="shapeType">
+              <option value="circle">Круг</option>
+              <option value="ellipse">Эллипс</option>
+              <option value="polygon">Полигон</option>
+              <option value="arc">Дуга</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="shapeId">ID фигуры</label>
+            <input type="text" id="shapeId" placeholder="Уникальный идентификатор">
+          </div>
+          <div class="form-group">
+            <label for="shapeColor">Цвет фигуры</label>
+            <input type="color" id="shapeColor" value="#ff4444">
+          </div>
+          <div class="form-group">
+            <label for="shapeHealth">Здоровье</label>
+            <input type="number" id="shapeHealth" value="1" min="1" max="10">
+          </div>
+          <div class="form-group">
+            <label for="shapeScore">Очки</label>
+            <input type="number" id="shapeScore" value="10" min="1" max="100">
+          </div>
+          
+          <!-- Параметры для круга -->
+          <div id="circleParams" class="shape-params">
+            <div class="form-group">
+              <label for="circleX">Центр X</label>
+              <input type="number" id="circleX" value="100" min="0" max="800">
+            </div>
+            <div class="form-group">
+              <label for="circleY">Центр Y</label>
+              <input type="number" id="circleY" value="100" min="0" max="600">
+            </div>
+            <div class="form-group">
+              <label for="circleRadius">Радиус</label>
+              <input type="number" id="circleRadius" value="25" min="1" max="100">
+            </div>
+          </div>
+          
+          <!-- Параметры для эллипса -->
+          <div id="ellipseParams" class="shape-params hidden">
+            <div class="form-group">
+              <label for="ellipseX">Центр X</label>
+              <input type="number" id="ellipseX" value="200" min="0" max="800">
+            </div>
+            <div class="form-group">
+              <label for="ellipseY">Центр Y</label>
+              <input type="number" id="ellipseY" value="100" min="0" max="600">
+            </div>
+            <div class="form-group">
+              <label for="ellipseRadiusX">Радиус X</label>
+              <input type="number" id="ellipseRadiusX" value="40" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="ellipseRadiusY">Радиус Y</label>
+              <input type="number" id="ellipseRadiusY" value="20" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="ellipseRotation">Поворот (радианы)</label>
+              <input type="number" id="ellipseRotation" value="0" step="0.1">
+            </div>
+          </div>
+          
+          <!-- Параметры для полигона -->
+          <div id="polygonParams" class="shape-params hidden">
+            <div class="form-group">
+              <label>Точки полигона</label>
+              <div id="polygonPoints">
+                <!-- Точки будут добавляться здесь -->
+              </div>
+              <button type="button" id="addPointBtn">Добавить точку</button>
+            </div>
+          </div>
+          
+          <!-- Параметры для дуги -->
+          <div id="arcParams" class="shape-params hidden">
+            <div class="form-group">
+              <label for="arcX">Центр X</label>
+              <input type="number" id="arcX" value="300" min="0" max="800">
+            </div>
+            <div class="form-group">
+              <label for="arcY">Центр Y</label>
+              <input type="number" id="arcY" value="100" min="0" max="600">
+            </div>
+            <div class="form-group">
+              <label for="arcRadiusX">Радиус X</label>
+              <input type="number" id="arcRadiusX" value="30" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="arcRadiusY">Радиус Y</label>
+              <input type="number" id="arcRadiusY" value="15" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="arcStartAngle">Начальный угол (радианы)</label>
+              <input type="number" id="arcStartAngle" value="0" step="0.1">
+            </div>
+            <div class="form-group">
+              <label for="arcEndAngle">Конечный угол (радианы)</label>
+              <input type="number" id="arcEndAngle" value="3.14" step="0.1">
+            </div>
+            <div class="form-group">
+              <label for="arcRotation">Поворот (радианы)</label>
+              <input type="number" id="arcRotation" value="0" step="0.1">
+            </div>
+          </div>
+          
+          <button id="updateShapeBtn">Обновить фигуру</button>
+          <button id="deleteShapeBtn" class="delete">Удалить фигуру</button>
+        </div>
+      </div>
+      
+      <!-- Экспорт -->
+      <div id="export-tab" class="tab-content hidden">
+        <div class="section">
+          <h3>Экспорт уровня</h3>
+          <p>Скопируйте JSON-код вашего уровня:</p>
+          <div class="json-output" id="jsonOutput"></div>
+          <button id="copyJsonBtn" class="export">Копировать JSON</button>
+          <button id="downloadJsonBtn" class="export">Скачать JSON</button>
+        </div>
+        
+        <div class="section">
+          <h3>Импорт уровня</h3>
+          <div class="form-group">
+            <label for="importJson">Вставьте JSON для импорта:</label>
+            <textarea id="importJson" rows="10" placeholder='{"name": "Уровень", ...}'></textarea>
+          </div>
+          <button id="importJsonBtn">Импортировать уровень</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="instructions">
+      <h2>Инструкция по использованию редактора:</h2>
+      <ul>
+        <li>Используйте вкладки для навигации между разделами редактора</li>
+        <li>В разделе "Настройки уровня" задайте общие параметры уровня, мяча и платформы</li>
+        <li>В разделе "Фигуры" создавайте и редактируйте фигуры на уровне</li>
+        <li>В разделе "Экспорт" скопируйте или скачайте JSON-файл вашего уровня</li>
+        <li>Все изменения отображаются в реальном времени в превью</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Класс для работы с редактором уровней
+    class LevelEditor {
+      constructor() {
+        this.canvas = document.getElementById('previewCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.currentLevel = this.getDefaultLevel();
+        this.selectedShapeIndex = -1;
+        
+        this.initEventListeners();
+        this.updatePreview();
+        this.updateShapeList();
+        this.updateJsonOutput();
+      }
+      
+      getDefaultLevel() {
+        return {
+          name: "Новый уровень",
+          ball: {
+            radius: 8,
+            initialPosition: {x: 200, y: 400},
+            initialVelocity: {x: 4, y: -5}
+          },
+          paddle: {
+            width: 80,
+            height: 15,
+            speed: 8,
+            color: "#4a4af0"
+          },
+          shapes: [],
+          bounds: {
+            left: 0,
+            top: 0,
+            right: 800,
+            bottom: 600,
+            bounceFactor: 1.0
+          }
+        };
+      }
+      
+      initEventListeners() {
+        // Переключение вкладок
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            
+            tab.classList.add('active');
+            document.getElementById(`${tab.dataset.tab}-tab`).classList.remove('hidden');
+          });
+        });
+        
+        // Обновление превью при изменении параметров уровня
+        document.getElementById('levelName').addEventListener('input', () => {
+          this.currentLevel.name = document.getElementById('levelName').value;
+          this.updatePreview();
+        });
+        
+        // Параметры мяча
+        document.getElementById('ballRadius').addEventListener('input', () => {
+          this.currentLevel.ball.radius = parseInt(document.getElementById('ballRadius').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('ballX').addEventListener('input', () => {
+          this.currentLevel.ball.initialPosition.x = parseInt(document.getElementById('ballX').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('ballY').addEventListener('input', () => {
+          this.currentLevel.ball.initialPosition.y = parseInt(document.getElementById('ballY').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('ballVX').addEventListener('input', () => {
+          this.currentLevel.ball.initialVelocity.x = parseFloat(document.getElementById('ballVX').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('ballVY').addEventListener('input', () => {
+          this.currentLevel.ball.initialVelocity.y = parseFloat(document.getElementById('ballVY').value);
+          this.updatePreview();
+        });
+        
+        // Параметры платформы
+        document.getElementById('paddleWidth').addEventListener('input', () => {
+          this.currentLevel.paddle.width = parseInt(document.getElementById('paddleWidth').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('paddleHeight').addEventListener('input', () => {
+          this.currentLevel.paddle.height = parseInt(document.getElementById('paddleHeight').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('paddleSpeed').addEventListener('input', () => {
+          this.currentLevel.paddle.speed = parseInt(document.getElementById('paddleSpeed').value);
+          this.updatePreview();
+        });
+        
+        document.getElementById('paddleColor').addEventListener('input', () => {
+          this.currentLevel.paddle.color = document.getElementById('paddleColor').value;
+          this.updatePreview();
+        });
+        
+        // Добавление фигуры
+        document.getElementById('addShapeBtn').addEventListener('click', () => {
+          this.addNewShape();
+        });
+        
+        // Обновление фигуры
+        document.getElementById('updateShapeBtn').addEventListener('click', () => {
+          this.updateSelectedShape();
+        });
+        
+        // Удаление фигуры
+        document.getElementById('deleteShapeBtn').addEventListener('click', () => {
+          this.deleteSelectedShape();
+        });
+        
+        // Изменение типа фигуры
+        document.getElementById('shapeType').addEventListener('change', () => {
+          this.showShapeParams(document.getElementById('shapeType').value);
+        });
+        
+        // Добавление точки для полигона
+        document.getElementById('addPointBtn').addEventListener('click', () => {
+          this.addPolygonPoint();
+        });
+        
+        // Копирование JSON
+        document.getElementById('copyJsonBtn').addEventListener('click', () => {
+          this.copyJsonToClipboard();
+        });
+        
+        // Скачивание JSON
+        document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+          this.downloadJson();
+        });
+        
+        // Импорт JSON
+        document.getElementById('importJsonBtn').addEventListener('click', () => {
+          this.importJson();
+        });
+      }
+      
+      updatePreview() {
+        // Очистка холста
+        this.ctx.fillStyle = '#1a237e';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисование границ
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисование платформы
+        const paddle = this.currentLevel.paddle;
+        const paddleX = (this.canvas.width - paddle.width) / 2;
+        const paddleY = this.canvas.height - 30;
+        
+        this.ctx.fillStyle = paddle.color;
+        this.ctx.fillRect(paddleX, paddleY, paddle.width, paddle.height);
+        
+        // Рисование мяча
+        const ball = this.currentLevel.ball;
+        this.ctx.fillStyle = '#ff4444';
+        this.ctx.beginPath();
+        this.ctx.arc(ball.initialPosition.x, ball.initialPosition.y, ball.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Рисование фигур
+        this.currentLevel.shapes.forEach((shape, index) => {
+          this.ctx.fillStyle = shape.color;
+          
+          if (index === this.selectedShapeIndex) {
+            this.ctx.strokeStyle = '#ffff00';
+            this.ctx.lineWidth = 2;
+          } else {
+            this.ctx.strokeStyle = 'transparent';
+            this.ctx.lineWidth = 0;
+          }
+          
+          switch (shape.type) {
+            case 'circle':
+              this.ctx.beginPath();
+              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.stroke();
+              break;
+              
+            case 'ellipse':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.stroke();
+              this.ctx.restore();
+              break;
+              
+            case 'polygon':
+              this.ctx.beginPath();
+              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+              for (let i = 1; i < shape.points.length; i++) {
+                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+              }
+              this.ctx.closePath();
+              this.ctx.fill();
+              this.ctx.stroke();
+              break;
+              
+            case 'arc':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
+              this.ctx.fill();
+              this.ctx.stroke();
+              this.ctx.restore();
+              break;
+          }
+        });
+      }
+      
+      updateShapeList() {
+        const shapeList = document.getElementById('shapeList');
+        shapeList.innerHTML = '';
+        
+        this.currentLevel.shapes.forEach((shape, index) => {
+          const shapeItem = document.createElement('div');
+          shapeItem.className = `shape-item ${index === this.selectedShapeIndex ? 'active' : ''}`;
+          shapeItem.textContent = `${shape.type} (${shape.id})`;
+          shapeItem.addEventListener('click', () => {
+            this.selectShape(index);
+          });
+          shapeList.appendChild(shapeItem);
+        });
+      }
+      
+      selectShape(index) {
+        this.selectedShapeIndex = index;
+        this.updateShapeList();
+        this.updateShapeForm();
+        this.updatePreview();
+      }
+      
+      updateShapeForm() {
+        if (this.selectedShapeIndex === -1) {
+          // Сброс формы, если фигура не выбрана
+          document.getElementById('shapeId').value = '';
+          document.getElementById('shapeColor').value = '#ff4444';
+          document.getElementById('shapeHealth').value = 1;
+          document.getElementById('shapeScore').value = 10;
+          return;
+        }
+        
+        const shape = this.currentLevel.shapes[this.selectedShapeIndex];
+        
+        document.getElementById('shapeType').value = shape.type;
+        document.getElementById('shapeId').value = shape.id;
+        document.getElementById('shapeColor').value = shape.color;
+        document.getElementById('shapeHealth').value = shape.health;
+        document.getElementById('shapeScore').value = shape.score;
+        
+        this.showShapeParams(shape.type);
+        
+        // Заполнение параметров в зависимости от типа фигуры
+        switch (shape.type) {
+          case 'circle':
+            document.getElementById('circleX').value = shape.x;
+            document.getElementById('circleY').value = shape.y;
+            document.getElementById('circleRadius').value = shape.radius;
+            break;
+            
+          case 'ellipse':
+            document.getElementById('ellipseX').value = shape.x;
+            document.getElementById('ellipseY').value = shape.y;
+            document.getElementById('ellipseRadiusX').value = shape.radiusX;
+            document.getElementById('ellipseRadiusY').value = shape.radiusY;
+            document.getElementById('ellipseRotation').value = shape.rotation || 0;
+            break;
+            
+          case 'polygon':
+            this.updatePolygonPoints(shape.points);
+            break;
+            
+          case 'arc':
+            document.getElementById('arcX').value = shape.x;
+            document.getElementById('arcY').value = shape.y;
+            document.getElementById('arcRadiusX').value = shape.radiusX;
+            document.getElementById('arcRadiusY').value = shape.radiusY;
+            document.getElementById('arcStartAngle').value = shape.startAngle;
+            document.getElementById('arcEndAngle').value = shape.endAngle;
+            document.getElementById('arcRotation').value = shape.rotation || 0;
+            break;
+        }
+      }
+      
+      showShapeParams(type) {
+        // Скрыть все параметры
+        document.querySelectorAll('.shape-params').forEach(el => {
+          el.classList.add('hidden');
+        });
+        
+        // Показать нужные параметры
+        document.getElementById(`${type}Params`).classList.remove('hidden');
+      }
+      
+      addNewShape() {
+        const shapeType = document.getElementById('shapeType').value;
+        const shapeId = document.getElementById('shapeId').value || `shape_${Date.now()}`;
+        
+        let newShape;
+        
+        switch (shapeType) {
+          case 'circle':
+            newShape = {
+              type: 'circle',
+              id: shapeId,
+              x: parseInt(document.getElementById('circleX').value),
+              y: parseInt(document.getElementById('circleY').value),
+              radius: parseInt(document.getElementById('circleRadius').value),
+              color: document.getElementById('shapeColor').value,
+              health: parseInt(document.getElementById('shapeHealth').value),
+              score: parseInt(document.getElementById('shapeScore').value)
+            };
+            break;
+            
+          case 'ellipse':
+            newShape = {
+              type: 'ellipse',
+              id: shapeId,
+              x: parseInt(document.getElementById('ellipseX').value),
+              y: parseInt(document.getElementById('ellipseY').value),
+              radiusX: parseInt(document.getElementById('ellipseRadiusX').value),
+              radiusY: parseInt(document.getElementById('ellipseRadiusY').value),
+              rotation: parseFloat(document.getElementById('ellipseRotation').value),
+              color: document.getElementById('shapeColor').value,
+              health: parseInt(document.getElementById('shapeHealth').value),
+              score: parseInt(document.getElementById('shapeScore').value)
+            };
+            break;
+            
+          case 'polygon':
+            newShape = {
+              type: 'polygon',
+              id: shapeId,
+              points: [{x: 100, y: 100}, {x: 150, y: 50}, {x: 200, y: 100}],
+              color: document.getElementById('shapeColor').value,
+              health: parseInt(document.getElementById('shapeHealth').value),
+              score: parseInt(document.getElementById('shapeScore').value)
+            };
+            break;
+            
+          case 'arc':
+            newShape = {
+              type: 'arc',
+              id: shapeId,
+              x: parseInt(document.getElementById('arcX').value),
+              y: parseInt(document.getElementById('arcY').value),
+              radiusX: parseInt(document.getElementById('arcRadiusX').value),
+              radiusY: parseInt(document.getElementById('arcRadiusY').value),
+              startAngle: parseFloat(document.getElementById('arcStartAngle').value),
+              endAngle: parseFloat(document.getElementById('arcEndAngle').value),
+              rotation: parseFloat(document.getElementById('arcRotation').value),
+              color: document.getElementById('shapeColor').value,
+              health: parseInt(document.getElementById('shapeHealth').value),
+              score: parseInt(document.getElementById('shapeScore').value)
+            };
+            break;
+        }
+        
+        this.currentLevel.shapes.push(newShape);
+        this.selectedShapeIndex = this.currentLevel.shapes.length - 1;
+        this.updateShapeList();
+        this.updateShapeForm();
+        this.updatePreview();
+        this.updateJsonOutput();
+      }
+      
+      updateSelectedShape() {
+        if (this.selectedShapeIndex === -1) return;
+        
+        const shape = this.currentLevel.shapes[this.selectedShapeIndex];
+        
+        shape.id = document.getElementById('shapeId').value;
+        shape.color = document.getElementById('shapeColor').value;
+        shape.health = parseInt(document.getElementById('shapeHealth').value);
+        shape.score = parseInt(document.getElementById('shapeScore').value);
+        
+        switch (shape.type) {
+          case 'circle':
+            shape.x = parseInt(document.getElementById('circleX').value);
+            shape.y = parseInt(document.getElementById('circleY').value);
+            shape.radius = parseInt(document.getElementById('circleRadius').value);
+            break;
+            
+          case 'ellipse':
+            shape.x = parseInt(document.getElementById('ellipseX').value);
+            shape.y = parseInt(document.getElementById('ellipseY').value);
+            shape.radiusX = parseInt(document.getElementById('ellipseRadiusX').value);
+            shape.radiusY = parseInt(document.getElementById('ellipseRadiusY').value);
+            shape.rotation = parseFloat(document.getElementById('ellipseRotation').value);
+            break;
+            
+          case 'polygon':
+            // Точки обновляются отдельно через updatePolygonPoint
+            break;
+            
+          case 'arc':
+            shape.x = parseInt(document.getElementById('arcX').value);
+            shape.y = parseInt(document.getElementById('arcY').value);
+            shape.radiusX = parseInt(document.getElementById('arcRadiusX').value);
+            shape.radiusY = parseInt(document.getElementById('arcRadiusY').value);
+            shape.startAngle = parseFloat(document.getElementById('arcStartAngle').value);
+            shape.endAngle = parseFloat(document.getElementById('arcEndAngle').value);
+            shape.rotation = parseFloat(document.getElementById('arcRotation').value);
+            break;
+        }
+        
+        this.updatePreview();
+        this.updateShapeList();
+        this.updateJsonOutput();
+      }
+      
+      deleteSelectedShape() {
+        if (this.selectedShapeIndex === -1) return;
+        
+        this.currentLevel.shapes.splice(this.selectedShapeIndex, 1);
+        this.selectedShapeIndex = -1;
+        this.updateShapeList();
+        this.updateShapeForm();
+        this.updatePreview();
+        this.updateJsonOutput();
+      }
+      
+      updatePolygonPoints(points) {
+        const polygonPoints = document.getElementById('polygonPoints');
+        polygonPoints.innerHTML = '';
+        
+        points.forEach((point, index) => {
+          const pointDiv = document.createElement('div');
+          pointDiv.className = 'point-inputs';
+          
+          pointDiv.innerHTML = `
+            <input type="number" class="point-x" value="${point.x}" placeholder="X" min="0" max="800">
+            <input type="number" class="point-y" value="${point.y}" placeholder="Y" min="0" max="600">
+            <button type="button" class="delete-point" data-index="${index}">✕</button>
+          `;
+          
+          polygonPoints.appendChild(pointDiv);
+          
+          // Обработчики для изменения точек
+          pointDiv.querySelector('.point-x').addEventListener('input', (e) => {
+            points[index].x = parseInt(e.target.value);
+            this.updatePreview();
+            this.updateJsonOutput();
+          });
+          
+          pointDiv.querySelector('.point-y').addEventListener('input', (e) => {
+            points[index].y = parseInt(e.target.value);
+            this.updatePreview();
+            this.updateJsonOutput();
+          });
+          
+          pointDiv.querySelector('.delete-point').addEventListener('click', () => {
+            points.splice(index, 1);
+            this.updatePolygonPoints(points);
+            this.updatePreview();
+            this.updateJsonOutput();
+          });
+        });
+      }
+      
+      addPolygonPoint() {
+        if (this.selectedShapeIndex === -1) return;
+        
+        const shape = this.currentLevel.shapes[this.selectedShapeIndex];
+        if (shape.type !== 'polygon') return;
+        
+        shape.points.push({x: 100, y: 100});
+        this.updatePolygonPoints(shape.points);
+        this.updatePreview();
+        this.updateJsonOutput();
+      }
+      
+      updateJsonOutput() {
+        const jsonOutput = document.getElementById('jsonOutput');
+        jsonOutput.textContent = JSON.stringify(this.currentLevel, null, 2);
+      }
+      
+      copyJsonToClipboard() {
+        const jsonText = JSON.stringify(this.currentLevel, null, 2);
+        navigator.clipboard.writeText(jsonText).then(() => {
+          alert('JSON скопирован в буфер обмена!');
+        }).catch(err => {
+          console.error('Ошибка копирования: ', err);
+        });
+      }
+      
+      downloadJson() {
+        const jsonText = JSON.stringify(this.currentLevel, null, 2);
+        const blob = new Blob([jsonText], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.currentLevel.name.replace(/\s+/g, '_')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      
+      importJson() {
+        const importText = document.getElementById('importJson').value;
+        
+        try {
+          const importedLevel = JSON.parse(importText);
+          this.currentLevel = importedLevel;
+          
+          // Обновляем форму
+          document.getElementById('levelName').value = this.currentLevel.name;
+          document.getElementById('ballRadius').value = this.currentLevel.ball.radius;
+          document.getElementById('ballX').value = this.currentLevel.ball.initialPosition.x;
+          document.getElementById('ballY').value = this.currentLevel.ball.initialPosition.y;
+          document.getElementById('ballVX').value = this.currentLevel.ball.initialVelocity.x;
+          document.getElementById('ballVY').value = this.currentLevel.ball.initialVelocity.y;
+          
+          document.getElementById('paddleWidth').value = this.currentLevel.paddle.width;
+          document.getElementById('paddleHeight').value = this.currentLevel.paddle.height;
+          document.getElementById('paddleSpeed').value = this.currentLevel.paddle.speed;
+          document.getElementById('paddleColor').value = this.currentLevel.paddle.color;
+          
+          this.selectedShapeIndex = -1;
+          this.updateShapeList();
+          this.updateShapeForm();
+          this.updatePreview();
+          this.updateJsonOutput();
+          
+          alert('Уровень успешно импортирован!');
+        } catch (e) {
+          alert('Ошибка при импорте JSON: ' + e.message);
+        }
+      }
+    }
+
+    // Инициализация редактора после загрузки DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      new LevelEditor();
+    });
+  </script>
+</body>
+</html>
