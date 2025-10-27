@@ -2,57 +2,63 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Игра с физикой отскоков</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     body {
       background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: white;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 10px;
+      touch-action: none;
     }
     .container {
-      max-width: 1000px;
       width: 100%;
+      max-width: 500px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 15px;
+      flex: 1;
     }
     header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
+      font-size: 1.8rem;
+      margin-bottom: 5px;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    .game-area {
-      display: flex;
-      gap: 20px;
-      width: 100%;
-      flex-wrap: wrap;
-      justify-content: center;
     }
     .game-container {
       position: relative;
       background: #222;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      flex: 1;
+      max-height: 60vh;
     }
     canvas {
       display: block;
       background: #111;
+      width: 100%;
+      height: 100%;
     }
     .ui-overlay {
       position: absolute;
@@ -64,20 +70,21 @@
     }
     .stats {
       position: absolute;
-      top: 15px;
-      left: 15px;
+      top: 10px;
+      left: 10px;
       background: rgba(0, 0, 0, 0.7);
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-size: 1.1rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
     }
     .controls {
       display: flex;
-      gap: 15px;
-      margin-top: 20px;
+      gap: 10px;
+      width: 100%;
+      justify-content: center;
     }
     button {
-      padding: 12px 25px;
+      padding: 12px 20px;
       background: #4a4af0;
       color: white;
       border: none;
@@ -86,14 +93,15 @@
       font-size: 1rem;
       font-weight: bold;
       transition: all 0.3s;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      max-width: 140px;
     }
     button:hover {
       background: #5a5aff;
-      transform: translateY(-2px);
     }
     button:active {
-      transform: translateY(1px);
+      transform: scale(0.95);
     }
     button#pauseBtn.paused {
       background: #f04a4a;
@@ -103,25 +111,29 @@
     }
     .level-selector {
       background: rgba(255, 255, 255, 0.1);
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
-      width: 300px;
+      width: 100%;
     }
     .level-selector h2 {
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       text-align: center;
+      font-size: 1.3rem;
     }
     .level-list {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 5px;
     }
     .level-item {
-      padding: 12px;
+      padding: 10px 15px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.3s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .level-item:hover {
       background: rgba(255, 255, 255, 0.2);
@@ -131,47 +143,73 @@
     }
     .instructions {
       background: rgba(255, 255, 255, 0.1);
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
-      margin-top: 20px;
-      max-width: 800px;
+      width: 100%;
+      font-size: 0.9rem;
     }
     .instructions h2 {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      font-size: 1.2rem;
     }
     .instructions ul {
-      margin-left: 20px;
+      margin-left: 15px;
     }
     .instructions li {
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
     .game-over {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.85);
-      padding: 30px;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
       border-radius: 10px;
       text-align: center;
       display: none;
+      width: 80%;
+      max-width: 300px;
     }
     .game-over h2 {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
+      font-size: 1.8rem;
+      margin-bottom: 10px;
     }
     .game-over p {
-      font-size: 1.2rem;
-      margin-bottom: 20px;
+      font-size: 1rem;
+      margin-bottom: 15px;
     }
-    @media (max-width: 768px) {
-      .game-area {
-        flex-direction: column;
-        align-items: center;
+    .touch-controls {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 15px;
+      pointer-events: none;
+    }
+    .touch-btn {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+    .touch-btn:active {
+      background: rgba(255, 255, 255, 0.4);
+    }
+    @media (max-height: 700px) {
+      .instructions {
+        display: none;
       }
-      .level-selector {
-        width: 100%;
-        max-width: 400px;
+      .game-container {
+        max-height: 70vh;
       }
     }
   </style>
@@ -180,47 +218,46 @@
   <div class="container">
     <header>
       <h1>Физика Отскоков</h1>
-      <p>Шарик отскакивает от фигур с реалистичной физикой!</p>
+      <p>Разбей все фигуры!</p>
     </header>
     
-    <div class="game-area">
-      <div class="game-container">
-        <canvas id="gameCanvas" width="600" height="500"></canvas>
-        <div class="ui-overlay">
-          <div class="stats">
-            <div>Столкновений: <span id="collisionCount">0</span></div>
-            <div>Осталось фигур: <span id="remainingShapes">0</span></div>
-            <div>Счет: <span id="score">0</span></div>
-          </div>
+    <div class="game-container">
+      <canvas id="gameCanvas"></canvas>
+      <div class="ui-overlay">
+        <div class="stats">
+          <div>Счет: <span id="score">0</span></div>
+          <div>Фигур: <span id="remainingShapes">0</span></div>
         </div>
-        <div class="game-over" id="gameOver">
-          <h2>Уровень пройден!</h2>
-          <p>Фигур разрушено: <span id="destroyedCount">0</span></p>
-          <p>Счет: <span id="finalScore">0</span></p>
-          <button id="nextLevelBtn">Следующий уровень</button>
+        <div class="touch-controls">
+          <div class="touch-btn" id="leftBtn">←</div>
+          <div class="touch-btn" id="rightBtn">→</div>
         </div>
       </div>
-      
-      <div class="level-selector">
-        <h2>Выбор уровня</h2>
-        <div class="level-list" id="levelList">
-          <!-- Уровни будут загружены через JS -->
-        </div>
-        <div class="controls">
-          <button id="resetBtn">Перезапуск</button>
-          <button id="pauseBtn">Пауза</button>
-        </div>
+      <div class="game-over" id="gameOver">
+        <h2>Уровень пройден!</h2>
+        <p>Счет: <span id="finalScore">0</span></p>
+        <button id="nextLevelBtn">Далее</button>
+      </div>
+    </div>
+    
+    <div class="level-selector">
+      <h2>Уровни</h2>
+      <div class="level-list" id="levelList">
+        <!-- Уровни будут загружены через JS -->
+      </div>
+      <div class="controls">
+        <button id="resetBtn">Заново</button>
+        <button id="pauseBtn">Пауза</button>
       </div>
     </div>
     
     <div class="instructions">
       <h2>Как играть:</h2>
       <ul>
-        <li>Шарик автоматически движется и отскакивает от фигур</li>
-        <li>Каждое столкновение с фигурой разрушает её и приносит очки</li>
-        <li>Разные фигуры имеют разную прочность и дают разное количество очков</li>
-        <li>Цель - разрушить все фигуры на уровне</li>
-        <li>Используйте кнопки для управления игрой</li>
+        <li>Двигайте платформу кнопками внизу</li>
+        <li>Отбивайте шарик и разбивайте фигуры</li>
+        <li>Каждая фигура дает очки</li>
+        <li>Цель - разбить все фигуры</li>
       </ul>
     </div>
   </div>
@@ -229,169 +266,93 @@
     // Уровни игры
     const levels = {
       "level1": {
-        name: "Хаски",
+        name: "Простой уровень",
         ball: {
           radius: 8,
-          initialPosition: {x: 100, y: 100},
-          initialVelocity: {x: 4, y: 3}
+          initialPosition: {x: 150, y: 300},
+          initialVelocity: {x: 3, y: -4}
+        },
+        paddle: {
+          width: 80,
+          height: 15,
+          speed: 8,
+          color: "#4a4af0"
         },
         shapes: [
           {
-            type: "polygon",
-            id: "left_ear_outer",
-            points: [
-              {x: 70, y: 40},
-              {x: 100, y: -20},
-              {x: 130, y: 40}
-            ],
-            color: "#999",
+            type: "rectangle",
+            id: "block1",
+            x: 50,
+            y: 80,
+            width: 60,
+            height: 20,
+            color: "#ff4444",
             health: 1,
             score: 10
           },
           {
-            type: "polygon",
-            id: "left_ear_inner",
-            points: [
-              {x: 85, y: 30},
-              {x: 100, y: -5},
-              {x: 115, y: 30}
-            ],
-            color: "pink",
-            health: 1,
-            score: 15
-          },
-          {
-            type: "polygon",
-            id: "right_ear_outer",
-            points: [
-              {x: 470, y: 40},
-              {x: 440, y: -20},
-              {x: 410, y: 40}
-            ],
-            color: "#999",
+            type: "rectangle",
+            id: "block2",
+            x: 130,
+            y: 80,
+            width: 60,
+            height: 20,
+            color: "#44ff44",
             health: 1,
             score: 10
           },
           {
-            type: "polygon",
-            id: "right_ear_inner", 
-            points: [
-              {x: 455, y: 30},
-              {x: 440, y: -5},
-              {x: 425, y: 30}
-            ],
-            color: "pink",
+            type: "rectangle",
+            id: "block3",
+            x: 210,
+            y: 80,
+            width: 60,
+            height: 20,
+            color: "#4444ff",
             health: 1,
-            score: 15
+            score: 10
           },
           {
-            type: "circle",
-            id: "head",
-            x: 300,
+            type: "rectangle",
+            id: "block4",
+            x: 290,
+            y: 80,
+            width: 60,
+            height: 20,
+            color: "#ffff44",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "rectangle",
+            id: "block5",
+            x: 90,
             y: 120,
-            radius: 80,
-            color: "#fff",
+            width: 60,
+            height: 20,
+            color: "#ff44ff",
             health: 2,
             score: 20
           },
           {
-            type: "ellipse",
-            id: "mask",
-            x: 300,
+            type: "rectangle",
+            id: "block6",
+            x: 170,
             y: 120,
-            radiusX: 50,
-            radiusY: 80,
-            color: "#999",
+            width: 60,
+            height: 20,
+            color: "#44ffff",
             health: 2,
-            score: 25
+            score: 20
           },
           {
-            type: "ellipse",
-            id: "left_eye",
-            x: 270,
-            y: 110,
-            radiusX: 10,
-            radiusY: 15,
-            color: "#000",
-            health: 1,
-            score: 5
-          },
-          {
-            type: "ellipse",
-            id: "right_eye",
-            x: 330,
-            y: 110,
-            radiusX: 10,
-            radiusY: 15,
-            color: "#000",
-            health: 1,
-            score: 5
-          },
-          {
-            type: "circle",
-            id: "nose",
-            x: 300,
-            y: 145,
-            radius: 8,
-            color: "#000",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "arc",
-            id: "tongue",
-            x: 300,
-            y: 165,
-            radiusX: 12,
-            radiusY: 8,
-            startAngle: 0,
-            endAngle: Math.PI,
-            color: "pink",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "ellipse",
-            id: "body",
-            x: 300,
-            y: 250,
-            radiusX: 70,
-            radiusY: 50,
-            color: "#ccc",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "ellipse", 
-            id: "left_paw",
-            x: 260,
-            y: 300,
-            radiusX: 20,
-            radiusY: 12,
-            color: "#fff",
-            health: 2,
-            score: 15
-          },
-          {
-            type: "ellipse",
-            id: "right_paw",
-            x: 340,
-            y: 300,
-            radiusX: 20,
-            radiusY: 12,
-            color: "#fff",
-            health: 2,
-            score: 15
-          },
-          {
-            type: "ellipse",
-            id: "tail",
-            x: 370,
-            y: 270,
-            radiusX: 30,
-            radiusY: 15,
-            rotation: -0.5,
-            color: "#ccc",
+            type: "rectangle",
+            id: "block7",
+            x: 250,
+            y: 120,
+            width: 60,
+            height: 20,
+            color: "#ff9966",
             health: 2,
             score: 20
           }
@@ -399,201 +360,306 @@
         bounds: {
           left: 0,
           top: 0,
-          right: 600,
+          right: 400,
           bottom: 500,
           bounceFactor: 0.95
         }
       },
       "level2": {
-        name: "Геометрические фигуры",
+        name: "Средний уровень",
         ball: {
           radius: 8,
-          initialPosition: {x: 100, y: 100},
-          initialVelocity: {x: 5, y: 4}
+          initialPosition: {x: 200, y: 350},
+          initialVelocity: {x: 4, y: -5}
+        },
+        paddle: {
+          width: 70,
+          height: 15,
+          speed: 7,
+          color: "#4a4af0"
         },
         shapes: [
           {
-            type: "circle",
-            id: "circle1",
-            x: 150,
-            y: 150,
-            radius: 40,
+            type: "rectangle",
+            id: "block1",
+            x: 30,
+            y: 60,
+            width: 50,
+            height: 20,
             color: "#ff4444",
-            health: 2,
-            score: 20
+            health: 1,
+            score: 10
           },
           {
-            type: "circle",
-            id: "circle2",
-            x: 450,
-            y: 150,
-            radius: 40,
+            type: "rectangle",
+            id: "block2",
+            x: 100,
+            y: 60,
+            width: 50,
+            height: 20,
             color: "#44ff44",
             health: 2,
             score: 20
           },
           {
-            type: "ellipse",
-            id: "ellipse1",
-            x: 300,
-            y: 100,
-            radiusX: 60,
-            radiusY: 30,
+            type: "rectangle",
+            id: "block3",
+            x: 170,
+            y: 60,
+            width: 50,
+            height: 20,
             color: "#4444ff",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "rectangle",
+            id: "block4",
+            x: 240,
+            y: 60,
+            width: 50,
+            height: 20,
+            color: "#ffff44",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "rectangle",
+            id: "block5",
+            x: 310,
+            y: 60,
+            width: 50,
+            height: 20,
+            color: "#ff44ff",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "rectangle",
+            id: "block6",
+            x: 60,
+            y: 100,
+            width: 50,
+            height: 20,
+            color: "#44ffff",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "rectangle",
+            id: "block7",
+            x: 130,
+            y: 100,
+            width: 50,
+            height: 20,
+            color: "#ff9966",
             health: 3,
             score: 30
           },
           {
-            type: "polygon",
-            id: "triangle",
-            points: [
-              {x: 200, y: 300},
-              {x: 300, y: 200},
-              {x: 400, y: 300}
-            ],
-            color: "#ffff44",
+            type: "rectangle",
+            id: "block8",
+            x: 200,
+            y: 100,
+            width: 50,
+            height: 20,
+            color: "#99ff66",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block9",
+            x: 270,
+            y: 100,
+            width: 50,
+            height: 20,
+            color: "#6699ff",
             health: 2,
-            score: 25
-          },
-          {
-            type: "polygon",
-            id: "pentagon",
-            points: [
-              {x: 100, y: 350},
-              {x: 150, y: 300},
-              {x: 200, y: 350},
-              {x: 175, y: 400},
-              {x: 125, y: 400}
-            ],
-            color: "#ff44ff",
-            health: 3,
-            score: 35
-          },
-          {
-            type: "polygon",
-            id: "hexagon",
-            points: [
-              {x: 400, y: 350},
-              {x: 450, y: 320},
-              {x: 500, y: 350},
-              {x: 500, y: 400},
-              {x: 450, y: 430},
-              {x: 400, y: 400}
-            ],
-            color: "#44ffff",
-            health: 3,
-            score: 35
+            score: 20
           }
         ],
         bounds: {
           left: 0,
           top: 0,
-          right: 600,
+          right: 400,
           bottom: 500,
           bounceFactor: 0.95
         }
       },
       "level3": {
-        name: "Случайные препятствия",
+        name: "Сложный уровень",
         ball: {
           radius: 8,
-          initialPosition: {x: 300, y: 400},
-          initialVelocity: {x: 4, y: -5}
+          initialPosition: {x: 200, y: 400},
+          initialVelocity: {x: 5, y: -5}
+        },
+        paddle: {
+          width: 60,
+          height: 15,
+          speed: 6,
+          color: "#4a4af0"
         },
         shapes: [
           {
-            type: "circle",
-            id: "c1",
-            x: 100,
-            y: 100,
-            radius: 25,
-            color: "#ff6666",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "circle",
-            id: "c2",
-            x: 500,
-            y: 100,
-            radius: 25,
-            color: "#66ff66",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "circle",
-            id: "c3",
-            x: 100,
-            y: 400,
-            radius: 25,
-            color: "#6666ff",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "circle",
-            id: "c4",
-            x: 500,
-            y: 400,
-            radius: 25,
-            color: "#ffff66",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "ellipse",
-            id: "e1",
-            x: 300,
-            y: 150,
-            radiusX: 80,
-            radiusY: 20,
-            color: "#ff66ff",
+            type: "rectangle",
+            id: "block1",
+            x: 20,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#ff4444",
             health: 2,
             score: 20
           },
           {
-            type: "ellipse",
-            id: "e2",
-            x: 300,
-            y: 350,
-            radiusX: 80,
-            radiusY: 20,
-            color: "#66ffff",
+            type: "rectangle",
+            id: "block2",
+            x: 75,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#44ff44",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block3",
+            x: 130,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#4444ff",
             health: 2,
             score: 20
           },
           {
-            type: "polygon",
-            id: "p1",
-            points: [
-              {x: 200, y: 200},
-              {x: 250, y: 250},
-              {x: 200, y: 300},
-              {x: 150, y: 250}
-            ],
+            type: "rectangle",
+            id: "block4",
+            x: 185,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#ffff44",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block5",
+            x: 240,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#ff44ff",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "rectangle",
+            id: "block6",
+            x: 295,
+            y: 50,
+            width: 45,
+            height: 20,
+            color: "#44ffff",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block7",
+            x: 50,
+            y: 90,
+            width: 45,
+            height: 20,
             color: "#ff9966",
-            health: 2,
-            score: 25
+            health: 1,
+            score: 10
           },
           {
-            type: "polygon",
-            id: "p2",
-            points: [
-              {x: 400, y: 200},
-              {x: 450, y: 250},
-              {x: 400, y: 300},
-              {x: 350, y: 250}
-            ],
+            type: "rectangle",
+            id: "block8",
+            x: 105,
+            y: 90,
+            width: 45,
+            height: 20,
             color: "#99ff66",
             health: 2,
-            score: 25
+            score: 20
+          },
+          {
+            type: "rectangle",
+            id: "block9",
+            x: 160,
+            y: 90,
+            width: 45,
+            height: 20,
+            color: "#6699ff",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block10",
+            x: 215,
+            y: 90,
+            width: 45,
+            height: 20,
+            color: "#ff66cc",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "rectangle",
+            id: "block11",
+            x: 270,
+            y: 90,
+            width: 45,
+            height: 20,
+            color: "#66ffcc",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "rectangle",
+            id: "block12",
+            x: 100,
+            y: 130,
+            width: 45,
+            height: 20,
+            color: "#cc66ff",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block13",
+            x: 155,
+            y: 130,
+            width: 45,
+            height: 20,
+            color: "#ffcc66",
+            health: 3,
+            score: 30
+          },
+          {
+            type: "rectangle",
+            id: "block14",
+            x: 210,
+            y: 130,
+            width: 45,
+            height: 20,
+            color: "#66ccff",
+            health: 3,
+            score: 30
           }
         ],
         bounds: {
           left: 0,
           top: 0,
-          right: 600,
+          right: 400,
           bottom: 500,
           bounceFactor: 0.95
         }
@@ -602,178 +668,75 @@
 
     // Класс для обработки физики
     class PhysicsEngine {
-      // Столкновение круга с кругом
-      circleCircleCollision(ball, circle) {
-        const dx = ball.x - circle.x;
-        const dy = ball.y - circle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < (ball.radius + circle.radius);
-      }
-
-      // Столкновение круга с эллипсом
-      circleEllipseCollision(ball, ellipse) {
-        // Учет поворота эллипса
-        const cos = Math.cos(ellipse.rotation || 0);
-        const sin = Math.sin(ellipse.rotation || 0);
+      // Столкновение круга с прямоугольником
+      circleRectCollision(ball, rect) {
+        // Ближайшая точка на прямоугольнике к центру шара
+        let closestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.width));
+        let closestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.height));
         
-        const dx = ball.x - ellipse.x;
-        const dy = ball.y - ellipse.y;
-        
-        // Поворот координат в систему эллипса
-        const rotatedX = dx * cos + dy * sin;
-        const rotatedY = -dx * sin + dy * cos;
-        
-        // Проверка столкновения
-        const normalized = (rotatedX * rotatedX) / (ellipse.radiusX * ellipse.radiusX) + 
-                          (rotatedY * rotatedY) / (ellipse.radiusY * ellipse.radiusY);
-        
-        return normalized <= 1 + (ball.radius / Math.min(ellipse.radiusX, ellipse.radiusY));
-      }
-
-      // Столкновение круга с полигоном
-      circlePolygonCollision(ball, polygon) {
-        for (let i = 0; i < polygon.points.length; i++) {
-          const p1 = polygon.points[i];
-          const p2 = polygon.points[(i + 1) % polygon.points.length];
-          
-          // Проверка столкновения с ребром
-          if (this.circleLineCollision(ball, p1, p2)) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      // Столкновение круга с отрезком
-      circleLineCollision(ball, p1, p2) {
-        // Вектор отрезка
-        const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
-        // Вектор от начала отрезка к центру шара
-        const ballVec = { x: ball.x - p1.x, y: ball.y - p1.y };
-        
-        const lineLengthSquared = lineVec.x * lineVec.x + lineVec.y * lineVec.y;
-        const dotProduct = ballVec.x * lineVec.x + ballVec.y * lineVec.y;
-        
-        let t = Math.max(0, Math.min(1, dotProduct / lineLengthSquared));
-        
-        // Ближайшая точка на отрезке
-        const closestPoint = {
-          x: p1.x + t * lineVec.x,
-          y: p1.y + t * lineVec.y
-        };
-        
-        // Расстояние до ближайшей точки
-        const dx = ball.x - closestPoint.x;
-        const dy = ball.y - closestPoint.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Расстояние от центра шара до ближайшей точки
+        const distanceX = ball.x - closestX;
+        const distanceY = ball.y - closestY;
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
         
         return distance < ball.radius;
       }
 
-      // Столкновение круга с дугой (упрощенно как с эллипсом)
-      circleArcCollision(ball, arc) {
-        // Для упрощения считаем дугу как часть эллипса
-        const ellipse = {
-          x: arc.x,
-          y: arc.y,
-          radiusX: arc.radiusX,
-          radiusY: arc.radiusY,
-          rotation: arc.rotation || 0
-        };
+      // Расчет нормали отскока от прямоугольника
+      calculateRectBounceNormal(ball, rect) {
+        // Определяем, с какой стороны произошло столкновение
+        const ballCenterX = ball.x;
+        const ballCenterY = ball.y;
         
-        if (!this.circleEllipseCollision(ball, ellipse)) {
-          return false;
-        }
+        // Расстояния до каждой стороны прямоугольника
+        const distLeft = Math.abs(ballCenterX - rect.x);
+        const distRight = Math.abs(ballCenterX - (rect.x + rect.width));
+        const distTop = Math.abs(ballCenterY - rect.y);
+        const distBottom = Math.abs(ballCenterY - (rect.y + rect.height));
         
-        // Проверяем, что точка касания находится в пределах углов дуги
-        const angle = Math.atan2(ball.y - arc.y, ball.x - arc.x);
-        const normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
+        // Находим минимальное расстояние
+        const minDist = Math.min(distLeft, distRight, distTop, distBottom);
         
-        return normalizedAngle >= arc.startAngle && normalizedAngle <= arc.endAngle;
-      }
-
-      // Расчет нормали отскока
-      calculateBounceNormal(ball, shape) {
-        let normal = { x: 0, y: 0 };
-        
-        switch (shape.type) {
-          case 'circle':
-            const dx = ball.x - shape.x;
-            const dy = ball.y - shape.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            normal = { x: dx / distance, y: dy / distance };
-            break;
-            
-          case 'ellipse':
-          case 'arc':
-            // Для эллипса/дуги нормаль зависит от положения точки касания
-            const cos = Math.cos(shape.rotation || 0);
-            const sin = Math.sin(shape.rotation || 0);
-            const localX = (ball.x - shape.x) * cos + (ball.y - shape.y) * sin;
-            const localY = -(ball.x - shape.x) * sin + (ball.y - shape.y) * cos;
-            
-            const gradientX = (2 * localX) / (shape.radiusX * shape.radiusX);
-            const gradientY = (2 * localY) / (shape.radiusY * shape.radiusY);
-            
-            // Поворот нормали обратно в глобальную систему
-            normal = {
-              x: gradientX * cos - gradientY * sin,
-              y: gradientX * sin + gradientY * cos
-            };
-            
-            const length = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
-            normal.x /= length;
-            normal.y /= length;
-            break;
-            
-          case 'polygon':
-            // Для полигона находим ближайшее ребро
-            let minDistance = Infinity;
-            for (let i = 0; i < shape.points.length; i++) {
-              const p1 = shape.points[i];
-              const p2 = shape.points[(i + 1) % shape.points.length];
-              
-              const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
-              const toBall = { x: ball.x - p1.x, y: ball.y - p1.y };
-              
-              const edgeLength = Math.sqrt(edge.x * edge.x + edge.y * edge.y);
-              const edgeNormal = { x: -edge.y / edgeLength, y: edge.x / edgeLength };
-              
-              const distance = Math.abs(toBall.x * edgeNormal.x + toBall.y * edgeNormal.y);
-              
-              if (distance < minDistance) {
-                minDistance = distance;
-                normal = edgeNormal;
-                
-                // Проверяем направление нормали
-                const dot = toBall.x * edgeNormal.x + toBall.y * edgeNormal.y;
-                if (dot < 0) {
-                  normal.x = -normal.x;
-                  normal.y = -normal.y;
-                }
-              }
-            }
-            break;
-        }
-        
-        return normal;
+        // Определяем нормаль в зависимости от ближайшей стороны
+        if (minDist === distLeft) return { x: -1, y: 0 };
+        if (minDist === distRight) return { x: 1, y: 0 };
+        if (minDist === distTop) return { x: 0, y: -1 };
+        return { x: 0, y: 1 };
       }
 
       // Обработка отскока
-      handleBounce(ball, shape, normal) {
+      handleBounce(ball, normal) {
         const dotProduct = ball.vx * normal.x + ball.vy * normal.y;
         
-        // Коэффициент отскока зависит от типа фигуры
-        const bounceFactor = shape.bounceFactor || 0.8;
+        // Коэффициент отскока
+        const bounceFactor = 0.95;
         
         ball.vx = ball.vx - 2 * dotProduct * normal.x * bounceFactor;
         ball.vy = ball.vy - 2 * dotProduct * normal.y * bounceFactor;
         
         // Коррекция позиции чтобы избежать залипания
         const overlap = ball.radius + 2;
-        
         ball.x += normal.x * overlap;
         ball.y += normal.y * overlap;
+      }
+
+      // Отскок от платформы с учетом угла
+      handlePaddleBounce(ball, paddle) {
+        // Вычисляем относительное положение удара по платформе (-1 до 1)
+        const hitPos = (ball.x - paddle.x) / paddle.width - 0.5;
+        
+        // Угол отскока зависит от позиции удара
+        const angle = hitPos * Math.PI / 3; // Максимальный угол 60 градусов
+        
+        // Скорость шарика
+        const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+        
+        // Новое направление
+        ball.vx = Math.sin(angle) * speed;
+        ball.vy = -Math.cos(angle) * speed;
+        
+        // Коррекция позиции
+        ball.y = paddle.y - ball.radius;
       }
     }
 
@@ -787,14 +750,19 @@
         this.currentLevel = 'level1';
         this.score = 0;
         
+        // Установка размеров холста
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
         // Загрузка уровня
         this.loadLevel(this.currentLevel);
         
         // Инициализация шарика
         this.resetBall();
         
-        // Статистика
-        this.collisionCount = 0;
+        // Управление платформой
+        this.paddleMovingLeft = false;
+        this.paddleMovingRight = false;
         
         // Запуск игрового цикла
         this.lastTime = 0;
@@ -802,6 +770,18 @@
         
         // Обработчики событий
         this.setupEventListeners();
+      }
+      
+      resizeCanvas() {
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth;
+        this.canvas.height = container.clientHeight;
+        
+        // Обновляем границы уровня под новый размер холста
+        if (this.bounds) {
+          this.bounds.right = this.canvas.width;
+          this.bounds.bottom = this.canvas.height;
+        }
       }
       
       loadLevel(levelId) {
@@ -817,7 +797,20 @@
           shape.active = true;
         });
         
-        this.bounds = level.bounds;
+        this.bounds = {...level.bounds};
+        this.bounds.right = this.canvas.width;
+        this.bounds.bottom = this.canvas.height;
+        
+        // Инициализация платформы
+        this.paddle = {
+          x: (this.canvas.width - level.paddle.width) / 2,
+          y: this.canvas.height - 30,
+          width: level.paddle.width,
+          height: level.paddle.height,
+          speed: level.paddle.speed,
+          color: level.paddle.color
+        };
+        
         this.levelName = level.name;
         
         // Сброс шарика
@@ -846,7 +839,6 @@
           this.resetBall();
           this.loadLevel(this.currentLevel);
           this.score = 0;
-          this.collisionCount = 0;
           this.updateUI();
         });
         
@@ -860,6 +852,38 @@
           const nextIndex = (currentIndex + 1) % levelIds.length;
           this.loadLevel(levelIds[nextIndex]);
           this.updateLevelList();
+        });
+        
+        // Кнопки управления для мобильных устройств
+        document.getElementById('leftBtn').addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.paddleMovingLeft = true;
+        });
+        
+        document.getElementById('leftBtn').addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.paddleMovingLeft = false;
+        });
+        
+        document.getElementById('rightBtn').addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.paddleMovingRight = true;
+        });
+        
+        document.getElementById('rightBtn').addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.paddleMovingRight = false;
+        });
+        
+        // Управление с клавиатуры для тестирования
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') this.paddleMovingLeft = true;
+          if (e.key === 'ArrowRight') this.paddleMovingRight = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+          if (e.key === 'ArrowLeft') this.paddleMovingLeft = false;
+          if (e.key === 'ArrowRight') this.paddleMovingRight = false;
         });
         
         // Инициализация списка уровней
@@ -903,6 +927,14 @@
       update(deltaTime) {
         if (this.isPaused) return;
         
+        // Движение платформы
+        if (this.paddleMovingLeft) {
+          this.paddle.x = Math.max(0, this.paddle.x - this.paddle.speed);
+        }
+        if (this.paddleMovingRight) {
+          this.paddle.x = Math.min(this.canvas.width - this.paddle.width, this.paddle.x + this.paddle.speed);
+        }
+        
         // Движение шара
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
@@ -911,52 +943,33 @@
         if (this.ball.x - this.ball.radius < this.bounds.left) {
           this.ball.vx = Math.abs(this.ball.vx) * this.bounds.bounceFactor;
           this.ball.x = this.bounds.left + this.ball.radius;
-          this.collisionCount++;
         } else if (this.ball.x + this.ball.radius > this.bounds.right) {
           this.ball.vx = -Math.abs(this.ball.vx) * this.bounds.bounceFactor;
           this.ball.x = this.bounds.right - this.ball.radius;
-          this.collisionCount++;
         }
         
         if (this.ball.y - this.ball.radius < this.bounds.top) {
           this.ball.vy = Math.abs(this.ball.vy) * this.bounds.bounceFactor;
           this.ball.y = this.bounds.top + this.ball.radius;
-          this.collisionCount++;
         } else if (this.ball.y + this.ball.radius > this.bounds.bottom) {
-          this.ball.vy = -Math.abs(this.ball.vy) * this.bounds.bounceFactor;
-          this.ball.y = this.bounds.bottom - this.ball.radius;
-          this.collisionCount++;
+          // Шарик ушел за нижнюю границу - перезапуск
+          this.resetBall();
+          return;
+        }
+
+        // Проверка столкновения с платформой
+        if (this.physics.circleRectCollision(this.ball, this.paddle)) {
+          this.physics.handlePaddleBounce(this.ball, this.paddle);
         }
 
         // Проверка столкновений с фигурами
-        let collisionOccurred = false;
-        
         for (let i = 0; i < this.shapes.length; i++) {
           const shape = this.shapes[i];
           if (!shape.active) continue;
           
-          let collision = false;
-          let normal = { x: 0, y: 0 };
-
-          switch (shape.type) {
-            case 'circle':
-              collision = this.physics.circleCircleCollision(this.ball, shape);
-              break;
-            case 'ellipse':
-              collision = this.physics.circleEllipseCollision(this.ball, shape);
-              break;
-            case 'polygon':
-              collision = this.physics.circlePolygonCollision(this.ball, shape);
-              break;
-            case 'arc':
-              collision = this.physics.circleArcCollision(this.ball, shape);
-              break;
-          }
-
-          if (collision) {
-            normal = this.physics.calculateBounceNormal(this.ball, shape);
-            this.physics.handleBounce(this.ball, shape, normal);
-            this.collisionCount++;
+          if (this.physics.circleRectCollision(this.ball, shape)) {
+            const normal = this.physics.calculateRectBounceNormal(this.ball, shape);
+            this.physics.handleBounce(this.ball, normal);
             
             // Уменьшаем здоровье фигуры
             shape.health--;
@@ -967,7 +980,6 @@
               this.score += shape.score;
             }
             
-            collisionOccurred = true;
             break; // Обрабатываем только одно столкновение за кадр
           }
         }
@@ -983,7 +995,6 @@
       }
       
       updateUI() {
-        document.getElementById('collisionCount').textContent = this.collisionCount;
         document.getElementById('score').textContent = this.score;
         
         const activeShapes = this.shapes.filter(shape => shape.active);
@@ -992,9 +1003,6 @@
       
       showGameOver() {
         const gameOver = document.getElementById('gameOver');
-        const destroyedCount = this.shapes.length - this.shapes.filter(shape => shape.active).length;
-        
-        document.getElementById('destroyedCount').textContent = destroyedCount;
         document.getElementById('finalScore').textContent = this.score;
         
         gameOver.style.display = 'block';
@@ -1008,6 +1016,10 @@
         this.ctx.fillStyle = '#111';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Рисование платформы
+        this.ctx.fillStyle = this.paddle.color;
+        this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+        
         // Рисование фигур
         this.shapes.forEach(shape => {
           if (!shape.active) return;
@@ -1017,44 +1029,7 @@
           this.ctx.globalAlpha = alpha;
           
           this.ctx.fillStyle = shape.color;
-          
-          switch (shape.type) {
-            case 'circle':
-              this.ctx.beginPath();
-              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
-              this.ctx.fill();
-              break;
-              
-            case 'ellipse':
-              this.ctx.save();
-              this.ctx.translate(shape.x, shape.y);
-              this.ctx.rotate(shape.rotation || 0);
-              this.ctx.beginPath();
-              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
-              this.ctx.fill();
-              this.ctx.restore();
-              break;
-              
-            case 'polygon':
-              this.ctx.beginPath();
-              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
-              for (let i = 1; i < shape.points.length; i++) {
-                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
-              }
-              this.ctx.closePath();
-              this.ctx.fill();
-              break;
-              
-            case 'arc':
-              this.ctx.save();
-              this.ctx.translate(shape.x, shape.y);
-              this.ctx.rotate(shape.rotation || 0);
-              this.ctx.beginPath();
-              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
-              this.ctx.fill();
-              this.ctx.restore();
-              break;
-          }
+          this.ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
           
           this.ctx.globalAlpha = 1;
         });
