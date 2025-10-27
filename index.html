@@ -1,49 +1,1208 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Векторный Арканоид</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Игра с физикой отскоков</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    body {
+      background: linear-gradient(135deg, #0c1445, #1a237e, #283593);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      touch-action: none;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      flex: 1;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    }
+    .game-container {
+      position: relative;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      flex: 1;
+      max-height: 60vh;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    .ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .stats {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+    button {
+      padding: 12px 20px;
+      background: #4a4af0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      flex: 1;
+      max-width: 140px;
+    }
+    button:hover {
+      background: #5a5aff;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+    }
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    button#pauseBtn.paused {
+      background: #f04a4a;
+    }
+    button#pauseBtn.paused:hover {
+      background: #ff5a5a;
+    }
+    .level-selector {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .level-selector h2 {
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 1.3rem;
+    }
+    .level-list {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    .level-item {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .level-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .level-item.active {
+      background: #4a4af0;
+      box-shadow: 0 4px 12px rgba(74, 74, 240, 0.4);
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .instructions h2 {
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+    .instructions ul {
+      margin-left: 15px;
+    }
+    .instructions li {
+      margin-bottom: 5px;
+    }
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      display: none;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    }
+    .game-over h2 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .game-over p {
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+    }
+    .touch-controls {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 15px;
+      pointer-events: none;
+    }
+    .touch-btn {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      pointer-events: auto;
+      touch-action: manipulation;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .touch-btn:active {
+      background: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    @media (max-height: 700px) {
+      .instructions {
+        display: none;
+      }
+      .game-container {
+        max-height: 70vh;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-header">
-            <h1>Векторный Арканоид</h1>
-            <div class="controls">
-                <button id="loadDrawing">Загрузить рисунок</button>
-                <select id="drawingSelect">
-                    <option value="">Выберите рисунок</option>
-                </select>
-                <div class="score">Счет: <span id="score">0</span></div>
-            </div>
-        </div>
-        
-        <div class="game-container">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-        
-        <div class="game-info">
-            <div class="info-item">Жизни: <span id="lives">3</span></div>
-            <div class="info-item">Уровень: <span id="level">1</span></div>
-            <div class="button-group">
-                <button id="startBtn">Начать игру</button>
-                <button id="pauseBtn">Пауза</button>
-            </div>
-        </div>
-
-        <div class="touch-controls">
-            <div class="touch-area left" id="leftBtn">
-                <span>←</span>
-            </div>
-            <div class="touch-area right" id="rightBtn">
-                <span>→</span>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="fileInput" accept=".json" style="display: none;">
+  <div class="container">
+    <header>
+      <h1>Физика Отскоков</h1>
+      <p>Разбей все фигуры!</p>
+    </header>
     
-    <script src="script.js"></script>
+    <div class="game-container">
+      <canvas id="gameCanvas" width="400" height="500"></canvas>
+      <div class="ui-overlay">
+        <div class="stats">
+          <div>Счет: <span id="score">0</span></div>
+          <div>Фигур: <span id="remainingShapes">0</span></div>
+        </div>
+        <div class="touch-controls">
+          <div class="touch-btn" id="leftBtn">←</div>
+          <div class="touch-btn" id="rightBtn">→</div>
+        </div>
+      </div>
+      <div class="game-over" id="gameOver">
+        <h2>Уровень пройден!</h2>
+        <p>Счет: <span id="finalScore">0</span></p>
+        <button id="nextLevelBtn">Далее</button>
+      </div>
+      <div class="loading" id="loading">
+        <h2>Загрузка уровней...</h2>
+        <p id="loadingText">Пожалуйста, подождите</p>
+      </div>
+    </div>
+    
+    <div class="level-selector">
+      <h2>Уровни</h2>
+      <div class="level-list" id="levelList">
+        <!-- Уровни будут загружены через JS -->
+      </div>
+      <div class="controls">
+        <button id="resetBtn">Заново</button>
+        <button id="pauseBtn">Пауза</button>
+      </div>
+    </div>
+    
+    <div class="instructions">
+      <h2>Как играть:</h2>
+      <ul>
+        <li>Двигайте платформу пальцем по экрану или кнопками внизу</li>
+        <li>Отбивайте шарик и разбивайте фигуры</li>
+        <li>Каждая фигура дает очки</li>
+        <li>Цель - разбить все фигуры</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Класс для загрузки уровней
+    class LevelLoader {
+      constructor() {
+        this.levels = {};
+        this.levelFiles = [
+          'levels/level1.json',
+          'levels/level2.json',
+          'levels/level3.json'
+        ];
+      }
+
+      async loadAllLevels() {
+        const loadingElement = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        
+        try {
+          for (let i = 0; i < this.levelFiles.length; i++) {
+            loadingText.textContent = `Загрузка уровня ${i + 1} из ${this.levelFiles.length}...`;
+            const level = await this.loadLevel(this.levelFiles[i]);
+            const levelId = `level${i + 1}`;
+            this.levels[levelId] = level;
+          }
+          
+          loadingElement.style.display = 'none';
+          return this.levels;
+        } catch (error) {
+          console.error('Ошибка загрузки уровней:', error);
+          loadingText.textContent = 'Ошибка загрузки уровней. Используются встроенные уровни.';
+          
+          // Возвращаем встроенные уровни в случае ошибки
+          return this.getBuiltinLevels();
+        }
+      }
+
+      async loadLevel(url) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return await response.json();
+        } catch (error) {
+          console.warn(`Не удалось загрузить уровень ${url}:`, error);
+          throw error;
+        }
+      }
+
+      getBuiltinLevels() {
+        // Возвращаем встроенные уровни на случай проблем с загрузкой
+        return {
+          "level1": {
+            "name": "Хаски",
+            "ball": {
+              "radius": 8,
+              "initialPosition": {"x": 200, "y": 400},
+              "initialVelocity": {"x": 4, "y": -5}
+            },
+            "paddle": {
+              "width": 80,
+              "height": 15,
+              "speed": 8,
+              "color": "#4a4af0"
+            },
+            "shapes": [
+              {
+                "type": "polygon",
+                "id": "left_ear_outer",
+                "points": [
+                  {"x": 80, "y": 50},
+                  {"x": 110, "y": 20},
+                  {"x": 140, "y": 50}
+                ],
+                "color": "#999",
+                "health": 1,
+                "score": 10
+              },
+              {
+                "type": "polygon",
+                "id": "left_ear_inner",
+                "points": [
+                  {"x": 95, "y": 40},
+                  {"x": 110, "y": 25},
+                  {"x": 125, "y": 40}
+                ],
+                "color": "pink",
+                "health": 1,
+                "score": 15
+              }
+            ],
+            "bounds": {
+              "left": 0,
+              "top": 0,
+              "right": 400,
+              "bottom": 500,
+              "bounceFactor": 1.0
+            }
+          },
+          "level2": {
+            "name": "Геометрические фигуры",
+            "ball": {
+              "radius": 8,
+              "initialPosition": {"x": 200, "y": 400},
+              "initialVelocity": {"x": 5, "y": -6}
+            },
+            "paddle": {
+              "width": 70,
+              "height": 15,
+              "speed": 7,
+              "color": "#4a4af0"
+            },
+            "shapes": [
+              {
+                "type": "circle",
+                "id": "circle1",
+                "x": 100,
+                "y": 80,
+                "radius": 25,
+                "color": "#ff4444",
+                "health": 2,
+                "score": 20
+              },
+              {
+                "type": "circle",
+                "id": "circle2",
+                "x": 300,
+                "y": 80,
+                "radius": 25,
+                "color": "#44ff44",
+                "health": 2,
+                "score": 20
+              }
+            ],
+            "bounds": {
+              "left": 0,
+              "top": 0,
+              "right": 400,
+              "bottom": 500,
+              "bounceFactor": 1.0
+            }
+          }
+        };
+      }
+    }
+
+    // Класс для обработки физики
+    class PhysicsEngine {
+      // Столкновение круга с кругом
+      circleCircleCollision(ball, circle) {
+        const dx = ball.x - circle.x;
+        const dy = ball.y - circle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (ball.radius + circle.radius);
+      }
+
+      // Столкновение круга с эллипсом
+      circleEllipseCollision(ball, ellipse) {
+        // Учет поворота эллипса
+        const cos = Math.cos(ellipse.rotation || 0);
+        const sin = Math.sin(ellipse.rotation || 0);
+        
+        const dx = ball.x - ellipse.x;
+        const dy = ball.y - ellipse.y;
+        
+        // Поворот координат в систему эллипса
+        const rotatedX = dx * cos + dy * sin;
+        const rotatedY = -dx * sin + dy * cos;
+        
+        // Проверка столкновения
+        const normalized = (rotatedX * rotatedX) / (ellipse.radiusX * ellipse.radiusX) + 
+                          (rotatedY * rotatedY) / (ellipse.radiusY * ellipse.radiusY);
+        
+        return normalized <= 1 + (ball.radius / Math.min(ellipse.radiusX, ellipse.radiusY));
+      }
+
+      // Столкновение круга с полигоном
+      circlePolygonCollision(ball, polygon) {
+        for (let i = 0; i < polygon.points.length; i++) {
+          const p1 = polygon.points[i];
+          const p2 = polygon.points[(i + 1) % polygon.points.length];
+          
+          // Проверка столкновения с ребром
+          if (this.circleLineCollision(ball, p1, p2)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // Столкновение круга с отрезком
+      circleLineCollision(ball, p1, p2) {
+        // Вектор отрезка
+        const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
+        // Вектор от начала отрезка к центру шара
+        const ballVec = { x: ball.x - p1.x, y: ball.y - p1.y };
+        
+        const lineLengthSquared = lineVec.x * lineVec.x + lineVec.y * lineVec.y;
+        const dotProduct = ballVec.x * lineVec.x + ballVec.y * lineVec.y;
+        
+        let t = Math.max(0, Math.min(1, dotProduct / lineLengthSquared));
+        
+        // Ближайшая точка на отрезке
+        const closestPoint = {
+          x: p1.x + t * lineVec.x,
+          y: p1.y + t * lineVec.y
+        };
+        
+        // Расстояние до ближайшей точки
+        const dx = ball.x - closestPoint.x;
+        const dy = ball.y - closestPoint.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        return distance < ball.radius;
+      }
+
+      // Столкновение круга с дугой (упрощенно как с эллипсом)
+      circleArcCollision(ball, arc) {
+        // Для упрощения считаем дугу как часть эллипса
+        const ellipse = {
+          x: arc.x,
+          y: arc.y,
+          radiusX: arc.radiusX,
+          radiusY: arc.radiusY,
+          rotation: arc.rotation || 0
+        };
+        
+        if (!this.circleEllipseCollision(ball, ellipse)) {
+          return false;
+        }
+        
+        // Проверяем, что точка касания находится в пределах углов дуги
+        const angle = Math.atan2(ball.y - arc.y, ball.x - arc.x);
+        const normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
+        
+        return normalizedAngle >= arc.startAngle && normalizedAngle <= arc.endAngle;
+      }
+
+      // Расчет нормали отскока
+      calculateBounceNormal(ball, shape) {
+        let normal = { x: 0, y: 0 };
+        
+        switch (shape.type) {
+          case 'circle':
+            const dx = ball.x - shape.x;
+            const dy = ball.y - shape.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            normal = { x: dx / distance, y: dy / distance };
+            break;
+            
+          case 'ellipse':
+          case 'arc':
+            // Для эллипса/дуги нормаль зависит от положения точки касания
+            const cos = Math.cos(shape.rotation || 0);
+            const sin = Math.sin(shape.rotation || 0);
+            const localX = (ball.x - shape.x) * cos + (ball.y - shape.y) * sin;
+            const localY = -(ball.x - shape.x) * sin + (ball.y - shape.y) * cos;
+            
+            const gradientX = (2 * localX) / (shape.radiusX * shape.radiusX);
+            const gradientY = (2 * localY) / (shape.radiusY * shape.radiusY);
+            
+            // Поворот нормали обратно в глобальную систему
+            normal = {
+              x: gradientX * cos - gradientY * sin,
+              y: gradientX * sin + gradientY * cos
+            };
+            
+            const length = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+            normal.x /= length;
+            normal.y /= length;
+            break;
+            
+          case 'polygon':
+            // Для полигона находим ближайшее ребро
+            let minDistance = Infinity;
+            for (let i = 0; i < shape.points.length; i++) {
+              const p1 = shape.points[i];
+              const p2 = shape.points[(i + 1) % shape.points.length];
+              
+              const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
+              const toBall = { x: ball.x - p1.x, y: ball.y - p1.y };
+              
+              const edgeLength = Math.sqrt(edge.x * edge.x + edge.y * edge.y);
+              const edgeNormal = { x: -edge.y / edgeLength, y: edge.x / edgeLength };
+              
+              const distance = Math.abs(toBall.x * edgeNormal.x + toBall.y * edgeNormal.y);
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                normal = edgeNormal;
+                
+                // Проверяем направление нормали
+                const dot = toBall.x * edgeNormal.x + toBall.y * edgeNormal.y;
+                if (dot < 0) {
+                  normal.x = -normal.x;
+                  normal.y = -normal.y;
+                }
+              }
+            }
+            break;
+        }
+        
+        return normal;
+      }
+
+      // Обработка отскока - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
+      handleBounce(ball, shape, normal) {
+        const dotProduct = ball.vx * normal.x + ball.vy * normal.y;
+        
+        // Убрали коэффициент отскока - теперь энергия сохраняется
+        ball.vx = ball.vx - 2 * dotProduct * normal.x;
+        ball.vy = ball.vy - 2 * dotProduct * normal.y;
+        
+        // Коррекция позиции чтобы избежать залипания
+        const overlap = ball.radius + 2;
+        
+        ball.x += normal.x * overlap;
+        ball.y += normal.y * overlap;
+      }
+
+      // Отскок от платформы с учетом угла - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
+      handlePaddleBounce(ball, paddle) {
+        // Вычисляем относительное положение удара по платформе (-1 до 1)
+        const hitPos = (ball.x - paddle.x) / paddle.width - 0.5;
+        
+        // Угол отскока зависит от позиции удара
+        const angle = hitPos * Math.PI / 3; // Максимальный угол 60 градусов
+        
+        // Сохраняем скорость (убрали потерю энергии)
+        const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+        
+        // Новое направление
+        ball.vx = Math.sin(angle) * speed;
+        ball.vy = -Math.cos(angle) * speed;
+        
+        // Коррекция позиции
+        ball.y = paddle.y - ball.radius;
+      }
+      
+      // Столкновение круга с прямоугольником (для платформы)
+      circleRectCollision(ball, rect) {
+        // Ближайшая точка на прямоугольнике к центру шара
+        let closestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.width));
+        let closestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.height));
+        
+        // Расстояние от центра шара до ближайшей точки
+        const distanceX = ball.x - closestX;
+        const distanceY = ball.y - closestY;
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        
+        return distance < ball.radius;
+      }
+    }
+
+    // Основной класс игры
+    class Game {
+      constructor(canvas, levels) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.physics = new PhysicsEngine();
+        this.isPaused = false;
+        this.currentLevel = 'level1';
+        this.score = 0;
+        this.levels = levels;
+        
+        // Для шлейфа шарика
+        this.ballTrail = [];
+        this.maxTrailLength = 15;
+        
+        // Для управления пальцем
+        this.touchStartX = 0;
+        this.paddleStartX = 0;
+        this.isDragging = false;
+        
+        // Установка размеров холста
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
+        // Загрузка уровня
+        this.loadLevel(this.currentLevel);
+        
+        // Инициализация шарика
+        this.resetBall();
+        
+        // Управление платформой
+        this.paddleMovingLeft = false;
+        this.paddleMovingRight = false;
+        
+        // Запуск игрового цикла
+        this.lastTime = 0;
+        this.animate(0);
+        
+        // Обработчики событий
+        this.setupEventListeners();
+      }
+      
+      resizeCanvas() {
+        // Сохраняем пропорции 4:5 как в уровнях
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Рассчитываем размеры с сохранением пропорций
+        const targetRatio = 400/500; // 4:5
+        const currentRatio = containerWidth / containerHeight;
+        
+        if (currentRatio > targetRatio) {
+          // Шире чем нужно - ограничиваем по высоте
+          this.canvas.height = containerHeight;
+          this.canvas.width = containerHeight * targetRatio;
+        } else {
+          // Уже чем нужно - ограничиваем по ширине
+          this.canvas.width = containerWidth;
+          this.canvas.height = containerWidth / targetRatio;
+        }
+        
+        // Обновляем границы уровня под новый размер холста
+        if (this.bounds) {
+          this.bounds.right = this.canvas.width;
+          this.bounds.bottom = this.canvas.height;
+          
+          // Обновляем позицию платформы
+          if (this.paddle) {
+            this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
+            this.paddle.y = this.canvas.height - 30;
+          }
+        }
+      }
+      
+      loadLevel(levelId) {
+        if (!this.levels[levelId]) {
+          console.error(`Уровень ${levelId} не найден`);
+          return;
+        }
+        
+        this.currentLevel = levelId;
+        const level = this.levels[levelId];
+        
+        // Копируем фигуры, чтобы не изменять оригинальные данные
+        this.shapes = JSON.parse(JSON.stringify(level.shapes));
+        
+        // Масштабируем фигуры под текущий размер холста
+        const scaleX = this.canvas.width / 400;
+        const scaleY = this.canvas.height / 500;
+        
+        this.shapes.forEach(shape => {
+          shape.initialHealth = shape.health;
+          shape.active = true;
+          
+          // Масштабируем координаты и размеры
+          if (shape.type === 'circle') {
+            shape.x *= scaleX;
+            shape.y *= scaleY;
+            shape.radius *= Math.min(scaleX, scaleY);
+          } else if (shape.type === 'ellipse' || shape.type === 'arc') {
+            shape.x *= scaleX;
+            shape.y *= scaleY;
+            shape.radiusX *= scaleX;
+            shape.radiusY *= scaleY;
+          } else if (shape.type === 'polygon') {
+            shape.points.forEach(point => {
+              point.x *= scaleX;
+              point.y *= scaleY;
+            });
+          }
+        });
+        
+        this.bounds = {...level.bounds};
+        this.bounds.right = this.canvas.width;
+        this.bounds.bottom = this.canvas.height;
+        
+        // Инициализация платформы
+        this.paddle = {
+          x: (this.canvas.width - level.paddle.width * scaleX) / 2,
+          y: this.canvas.height - 30,
+          width: level.paddle.width * scaleX,
+          height: level.paddle.height * scaleY,
+          speed: level.paddle.speed * scaleX,
+          color: level.paddle.color
+        };
+        
+        this.levelName = level.name;
+        
+        // Сброс шарика
+        this.resetBall();
+        
+        // Очистка шлейфа
+        this.ballTrail = [];
+        
+        // Обновление UI
+        this.updateUI();
+        
+        // Скрыть экран завершения игры
+        document.getElementById('gameOver').style.display = 'none';
+      }
+      
+      resetBall() {
+        const level = this.levels[this.currentLevel];
+        const scaleX = this.canvas.width / 400;
+        const scaleY = this.canvas.height / 500;
+        
+        this.ball = {
+          x: level.ball.initialPosition.x * scaleX,
+          y: level.ball.initialPosition.y * scaleY,
+          vx: level.ball.initialVelocity.x * scaleX,
+          vy: level.ball.initialVelocity.y * scaleY,
+          radius: level.ball.radius * Math.min(scaleX, scaleY)
+        };
+        
+        // Очистка шлейфа при сбросе шарика
+        this.ballTrail = [];
+      }
+      
+      setupEventListeners() {
+        document.getElementById('resetBtn').addEventListener('click', () => {
+          this.resetBall();
+          this.loadLevel(this.currentLevel);
+          this.score = 0;
+          this.updateUI();
+        });
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+          this.togglePause();
+        });
+        
+        document.getElementById('nextLevelBtn').addEventListener('click', () => {
+          const levelIds = Object.keys(this.levels);
+          const currentIndex = levelIds.indexOf(this.currentLevel);
+          const nextIndex = (currentIndex + 1) % levelIds.length;
+          this.loadLevel(levelIds[nextIndex]);
+          this.updateLevelList();
+        });
+        
+        // Кнопки управления для мобильных устройств
+        document.getElementById('leftBtn').addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.paddleMovingLeft = true;
+        });
+        
+        document.getElementById('leftBtn').addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.paddleMovingLeft = false;
+        });
+        
+        document.getElementById('rightBtn').addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.paddleMovingRight = true;
+        });
+        
+        document.getElementById('rightBtn').addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.paddleMovingRight = false;
+        });
+        
+        // Управление с клавиатуры для тестирования
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') this.paddleMovingLeft = true;
+          if (e.key === 'ArrowRight') this.paddleMovingRight = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+          if (e.key === 'ArrowLeft') this.paddleMovingLeft = false;
+          if (e.key === 'ArrowRight') this.paddleMovingRight = false;
+        });
+        
+        // Управление пальцем по всему экрану
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const rect = this.canvas.getBoundingClientRect();
+          this.touchStartX = touch.clientX - rect.left;
+          this.paddleStartX = this.paddle.x;
+          this.isDragging = true;
+        });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+          if (!this.isDragging) return;
+          e.preventDefault();
+          
+          const touch = e.touches[0];
+          const rect = this.canvas.getBoundingClientRect();
+          const touchX = touch.clientX - rect.left;
+          
+          // Вычисляем смещение и перемещаем платформу
+          const deltaX = touchX - this.touchStartX;
+          let newPaddleX = this.paddleStartX + deltaX;
+          
+          // Ограничиваем движение платформы границами экрана
+          newPaddleX = Math.max(0, Math.min(this.canvas.width - this.paddle.width, newPaddleX));
+          
+          this.paddle.x = newPaddleX;
+        });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.isDragging = false;
+        });
+        
+        this.canvas.addEventListener('touchcancel', (e) => {
+          e.preventDefault();
+          this.isDragging = false;
+        });
+        
+        // Инициализация списка уровней
+        this.updateLevelList();
+      }
+      
+      updateLevelList() {
+        const levelList = document.getElementById('levelList');
+        levelList.innerHTML = '';
+        
+        Object.keys(this.levels).forEach(levelId => {
+          const level = this.levels[levelId];
+          const levelItem = document.createElement('div');
+          levelItem.className = 'level-item';
+          if (levelId === this.currentLevel) {
+            levelItem.classList.add('active');
+          }
+          levelItem.textContent = level.name;
+          levelItem.addEventListener('click', () => {
+            this.loadLevel(levelId);
+            this.updateLevelList();
+          });
+          levelList.appendChild(levelItem);
+        });
+      }
+      
+      togglePause() {
+        this.isPaused = !this.isPaused;
+        const pauseBtn = document.getElementById('pauseBtn');
+        
+        if (this.isPaused) {
+          pauseBtn.textContent = 'Продолжить';
+          pauseBtn.classList.add('paused');
+        } else {
+          pauseBtn.textContent = 'Пауза';
+          pauseBtn.classList.remove('paused');
+          this.animate(0);
+        }
+      }
+      
+      update(deltaTime) {
+        if (this.isPaused) return;
+        
+        // Движение платформы
+        if (this.paddleMovingLeft) {
+          this.paddle.x = Math.max(0, this.paddle.x - this.paddle.speed);
+        }
+        if (this.paddleMovingRight) {
+          this.paddle.x = Math.min(this.canvas.width - this.paddle.width, this.paddle.x + this.paddle.speed);
+        }
+        
+        // Движение шара
+        this.ball.x += this.ball.vx;
+        this.ball.y += this.ball.vy;
+
+        // Добавляем позицию в шлейф
+        this.ballTrail.push({
+          x: this.ball.x,
+          y: this.ball.y,
+          radius: this.ball.radius,
+          alpha: 1.0
+        });
+        
+        // Ограничиваем длину шлейфа
+        if (this.ballTrail.length > this.maxTrailLength) {
+          this.ballTrail.shift();
+        }
+        
+        // Уменьшаем прозрачность элементов шлейфа
+        this.ballTrail.forEach((point, index) => {
+          point.alpha = index / this.ballTrail.length;
+        });
+
+        // Проверка столкновений с границами - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
+        if (this.ball.x - this.ball.radius < this.bounds.left) {
+          this.ball.vx = Math.abs(this.ball.vx);
+          this.ball.x = this.bounds.left + this.ball.radius;
+        } else if (this.ball.x + this.ball.radius > this.bounds.right) {
+          this.ball.vx = -Math.abs(this.ball.vx);
+          this.ball.x = this.bounds.right - this.ball.radius;
+        }
+        
+        if (this.ball.y - this.ball.radius < this.bounds.top) {
+          this.ball.vy = Math.abs(this.ball.vy);
+          this.ball.y = this.bounds.top + this.ball.radius;
+        } else if (this.ball.y + this.ball.radius > this.bounds.bottom) {
+          // Шарик ушел за нижнюю границу - перезапуск
+          this.resetBall();
+          return;
+        }
+
+        // Проверка столкновения с платформой
+        if (this.physics.circleRectCollision(this.ball, this.paddle)) {
+          this.physics.handlePaddleBounce(this.ball, this.paddle);
+        }
+
+        // Проверка столкновений с фигурами
+        for (let i = 0; i < this.shapes.length; i++) {
+          const shape = this.shapes[i];
+          if (!shape.active) continue;
+          
+          let collision = false;
+          let normal = { x: 0, y: 0 };
+
+          switch (shape.type) {
+            case 'circle':
+              collision = this.physics.circleCircleCollision(this.ball, shape);
+              break;
+            case 'ellipse':
+              collision = this.physics.circleEllipseCollision(this.ball, shape);
+              break;
+            case 'polygon':
+              collision = this.physics.circlePolygonCollision(this.ball, shape);
+              break;
+            case 'arc':
+              collision = this.physics.circleArcCollision(this.ball, shape);
+              break;
+          }
+
+          if (collision) {
+            normal = this.physics.calculateBounceNormal(this.ball, shape);
+            this.physics.handleBounce(this.ball, shape, normal);
+            
+            // Уменьшаем здоровье фигуры
+            shape.health--;
+            
+            // Если здоровье закончилось, деактивируем фигуру
+            if (shape.health <= 0) {
+              shape.active = false;
+              this.score += shape.score;
+            }
+            
+            break; // Обрабатываем только одно столкновение за кадр
+          }
+        }
+        
+        // Обновление UI
+        this.updateUI();
+        
+        // Проверка завершения уровня
+        const activeShapes = this.shapes.filter(shape => shape.active);
+        if (activeShapes.length === 0) {
+          this.showGameOver();
+        }
+      }
+      
+      updateUI() {
+        document.getElementById('score').textContent = this.score;
+        
+        const activeShapes = this.shapes.filter(shape => shape.active);
+        document.getElementById('remainingShapes').textContent = activeShapes.length;
+      }
+      
+      showGameOver() {
+        const gameOver = document.getElementById('gameOver');
+        document.getElementById('finalScore').textContent = this.score;
+        
+        gameOver.style.display = 'block';
+        this.isPaused = true;
+        document.getElementById('pauseBtn').textContent = 'Продолжить';
+        document.getElementById('pauseBtn').classList.add('paused');
+      }
+      
+      draw() {
+        // Создание градиента для фона
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, '#1a237e');
+        gradient.addColorStop(0.5, '#283593');
+        gradient.addColorStop(1, '#303f9f');
+        
+        // Очистка холста с градиентом
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисование шлейфа шарика
+        this.ballTrail.forEach((point, index) => {
+          if (index === 0) return; // Пропускаем первую точку (текущее положение шарика)
+          
+          this.ctx.globalAlpha = point.alpha * 0.6;
+          this.ctx.fillStyle = `rgba(255, 100, 100, ${point.alpha})`;
+          
+          // Уменьшаем размер точек шлейфа
+          const trailRadius = point.radius * point.alpha;
+          
+          this.ctx.beginPath();
+          this.ctx.arc(point.x, point.y, trailRadius, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+        
+        this.ctx.globalAlpha = 1;
+        
+        // Рисование платформы с тенью
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowOffsetX = 3;
+        this.ctx.shadowOffsetY = 3;
+        
+        this.ctx.fillStyle = this.paddle.color;
+        this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+        
+        // Сбрасываем тень для фигур
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        
+        // Рисование фигур с тенями
+        this.shapes.forEach(shape => {
+          if (!shape.active) return;
+          
+          // Прозрачность в зависимости от здоровья
+          const alpha = shape.health / shape.initialHealth;
+          this.ctx.globalAlpha = alpha;
+          
+          // Тень для фигуры
+          this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          this.ctx.shadowBlur = 8;
+          this.ctx.shadowOffsetX = 2;
+          this.ctx.shadowOffsetY = 2;
+          
+          this.ctx.fillStyle = shape.color;
+          
+          switch (shape.type) {
+            case 'circle':
+              this.ctx.beginPath();
+              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+              this.ctx.fill();
+              break;
+              
+            case 'ellipse':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+              
+            case 'polygon':
+              this.ctx.beginPath();
+              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+              for (let i = 1; i < shape.points.length; i++) {
+                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+              }
+              this.ctx.closePath();
+              this.ctx.fill();
+              break;
+              
+            case 'arc':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+          }
+          
+          // Сбрасываем тень
+          this.ctx.shadowColor = 'transparent';
+          this.ctx.shadowBlur = 0;
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
+          
+          this.ctx.globalAlpha = 1;
+        });
+        
+        // Рисование шарика с тенью
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.shadowBlur = 6;
+        this.ctx.shadowOffsetX = 2;
+        this.ctx.shadowOffsetY = 2;
+        
+        this.ctx.fillStyle = '#ff4444';
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Сбрасываем тень для границ
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        
+        // Рисование границ
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+      
+      animate(timestamp) {
+        const deltaTime = timestamp - this.lastTime;
+        this.lastTime = timestamp;
+        
+        this.update(deltaTime);
+        this.draw();
+        
+        if (!this.isPaused) {
+          requestAnimationFrame(this.animate.bind(this));
+        }
+      }
+    }
+
+    // Инициализация игры после загрузки уровней
+    document.addEventListener('DOMContentLoaded', async () => {
+      const levelLoader = new LevelLoader();
+      const levels = await levelLoader.loadAllLevels();
+      
+      const canvas = document.getElementById('gameCanvas');
+      new Game(canvas, levels);
+    });
+  </script>
 </body>
 </html>
