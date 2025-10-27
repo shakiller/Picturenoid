@@ -1,110 +1,142 @@
 {
   "name": "Хаски",
-  "elements": [
+  "shapes": [
     {
-      "type": "ear",
-      "x": 70,
-      "y": 40,
-      "flip": false,
+      "type": "polygon",
+      "points": [
+        {"x": 70, "y": 40},
+        {"x": 100, "y": -20},
+        {"x": 130, "y": 40}
+      ],
       "color": "#999",
-      "innerColor": "pink",
-      "points": [[0, 0], [30, -60], [60, 0]],
-      "innerPoints": [[15, -10], [30, -45], [45, -10]]
+      "layer": 1
     },
     {
-      "type": "ear",
-      "x": 170,
-      "y": 40,
-      "flip": true,
-      "color": "#999",
-      "innerColor": "pink",
-      "points": [[0, 0], [30, -60], [60, 0]],
-      "innerPoints": [[15, -10], [30, -45], [45, -10]]
+      "type": "polygon",
+      "points": [
+        {"x": 85, "y": 30},
+        {"x": 100, "y": -5},
+        {"x": 115, "y": 30}
+      ],
+      "color": "pink",
+      "layer": 2
     },
     {
-      "type": "head",
+      "type": "polygon",
+      "points": [
+        {"x": 170, "y": 40},
+        {"x": 140, "y": -20},
+        {"x": 110, "y": 40}
+      ],
+      "color": "#999",
+      "layer": 1
+    },
+    {
+      "type": "polygon", 
+      "points": [
+        {"x": 155, "y": 30},
+        {"x": 140, "y": -5},
+        {"x": 125, "y": 30}
+      ],
+      "color": "pink",
+      "layer": 2
+    },
+    {
+      "type": "circle",
       "x": 150,
       "y": 120,
       "radius": 80,
-      "color": "#fff"
+      "color": "#fff",
+      "layer": 3
     },
     {
-      "type": "mask",
+      "type": "ellipse",
       "x": 150,
       "y": 120,
       "radiusX": 50,
       "radiusY": 80,
-      "color": "#999"
+      "color": "#999",
+      "layer": 4
     },
     {
-      "type": "eye",
+      "type": "ellipse",
       "x": 120,
       "y": 110,
       "radiusX": 10,
       "radiusY": 15,
-      "color": "#000"
+      "color": "#000",
+      "layer": 5
     },
     {
-      "type": "eye",
+      "type": "ellipse",
       "x": 180,
       "y": 110,
       "radiusX": 10,
       "radiusY": 15,
-      "color": "#000"
+      "color": "#000",
+      "layer": 5
     },
     {
-      "type": "nose",
+      "type": "circle",
       "x": 150,
       "y": 145,
       "radius": 8,
-      "color": "#000"
+      "color": "#000",
+      "layer": 6
     },
     {
-      "type": "tongue",
+      "type": "arc",
       "x": 150,
       "y": 165,
       "radiusX": 12,
       "radiusY": 8,
+      "startAngle": 0,
+      "endAngle": 3.14159,
       "color": "pink",
-      "direction": "up"
+      "layer": 7
     },
     {
-      "type": "body",
+      "type": "ellipse",
       "x": 150,
       "y": 250,
       "radiusX": 70,
       "radiusY": 50,
-      "color": "#ccc"
+      "color": "#ccc",
+      "layer": 8
     },
     {
-      "type": "paw",
+      "type": "ellipse",
       "x": 110,
       "y": 300,
       "radiusX": 20,
       "radiusY": 12,
-      "color": "#fff"
+      "color": "#fff",
+      "layer": 9
     },
     {
-      "type": "paw",
+      "type": "ellipse",
       "x": 190,
       "y": 300,
       "radiusX": 20,
       "radiusY": 12,
-      "color": "#fff"
+      "color": "#fff",
+      "layer": 9
     },
     {
-      "type": "tail",
+      "type": "ellipse",
       "x": 220,
       "y": 270,
       "radiusX": 30,
       "radiusY": 15,
+      "rotation": -0.5,
       "color": "#ccc",
-      "rotation": -0.5
+      "layer": 10
     }
   ],
-  "canvas": {
-    "width": 300,
-    "height": 350,
-    "background": "transparent"
+  "renderOrder": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "metadata": {
+    "canvasWidth": 300,
+    "canvasHeight": 350,
+    "supportedPrimitives": ["rectangle", "circle", "ellipse", "polygon", "arc", "path"]
   }
 }
