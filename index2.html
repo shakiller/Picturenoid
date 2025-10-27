@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Физика отскоков от фигур</title>
+  <style>
+    body {
+      margin: 0;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      background: #222;
+      border: 2px solid #555;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #555;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #666;
+    }
+    .info {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <button id="resetBtn">Сбросить</button>
+      <button id="pauseBtn">Пауза</button>
+    </div>
+    <canvas id="gameCanvas" width="300" height="350"></canvas>
+    <div class="info">
+      <p>Шарик отскакивает от фигур с разной физикой</p>
+    </div>
+  </div>
+
+  <script>
+    // Данные уровня с фигурами
+    const levelData = {
+      name: "Хаски",
+      physics: {
+        ball: {
+          radius: 5,
+          initialPosition: {x: 50, y: 50},
+          initialVelocity: {x: 3, y: 2}
+        }
+      },
+      collisionShapes: [
+        {
+          type: "polygon",
+          id: "left_ear_outer",
+          points: [
+            {x: 70, y: 40},
+            {x: 100, y: -20},
+            {x: 130, y: 40}
+          ],
+          color: "#999",
+          collisionType: "solid",
+          bounceFactor: 0.8
+        },
+        {
+          type: "polygon",
+          id: "left_ear_inner",
+          points: [
+            {x: 85, y: 30},
+            {x: 100, y: -5},
+            {x: 115, y: 30}
+          ],
+          color: "pink",
+          collisionType: "solid",
+          bounceFactor: 0.7
+        },
+        {
+          type: "polygon",
+          id: "right_ear_outer",
+          points: [
+            {x: 170, y: 40},
+            {x: 140, y: -20},
+            {x: 110, y: 40}
+          ],
+          color: "#999",
+          collisionType: "solid",
+          bounceFactor: 0.8
+        },
+        {
+          type: "polygon",
+          id: "right_ear_inner", 
+          points: [
+            {x: 155, y: 30},
+            {x: 140, y: -5},
+            {x: 125, y: 30}
+          ],
+          color: "pink",
+          collisionType: "solid",
+          bounceFactor: 0.7
+        },
+        {
+          type: "circle",
+          id: "head",
+          x: 150,
+          y: 120,
+          radius: 80,
+          color: "#fff",
+          collisionType: "solid",
+          bounceFactor: 0.9
+        },
+        {
+          type: "ellipse",
+          id: "mask",
+          x: 150,
+          y: 120,
+          radiusX: 50,
+          radiusY: 80,
+          color: "#999",
+          collisionType: "solid",
+          bounceFactor: 0.85
+        },
+        {
+          type: "ellipse",
+          id: "left_eye",
+          x: 120,
+          y: 110,
+          radiusX: 10,
+          radiusY: 15,
+          color: "#000",
+          collisionType: "solid",
+          bounceFactor: 0.6
+        },
+        {
+          type: "ellipse",
+          id: "right_eye",
+          x: 180,
+          y: 110,
+          radiusX: 10,
+          radiusY: 15,
+          color: "#000",
+          collisionType: "solid",
+          bounceFactor: 0.6
+        },
+        {
+          type: "circle",
+          id: "nose",
+          x: 150,
+          y: 145,
+          radius: 8,
+          color: "#000",
+          collisionType: "solid", 
+          bounceFactor: 0.5
+        },
+        {
+          type: "arc",
+          id: "tongue",
+          x: 150,
+          y: 165,
+          radiusX: 12,
+          radiusY: 8,
+          startAngle: 0,
+          endAngle: Math.PI,
+          color: "pink",
+          collisionType: "bouncy",
+          bounceFactor: 1.2
+        },
+        {
+          type: "ellipse",
+          id: "body",
+          x: 150,
+          y: 250,
+          radiusX: 70,
+          radiusY: 50,
+          color: "#ccc",
+          collisionType: "solid",
+          bounceFactor: 0.8
+        },
+        {
+          type: "ellipse", 
+          id: "left_paw",
+          x: 110,
+          y: 300,
+          radiusX: 20,
+          radiusY: 12,
+          color: "#fff",
+          collisionType: "solid",
+          bounceFactor: 0.7
+        },
+        {
+          type: "ellipse",
+          id: "right_paw",
+          x: 190,
+          y: 300,
+          radiusX: 20,
+          radiusY: 12,
+          color: "#fff",
+          collisionType: "solid",
+          bounceFactor: 0.7
+        },
+        {
+          type: "ellipse",
+          id: "tail",
+          x: 220,
+          y: 270,
+          radiusX: 30,
+          radiusY: 15,
+          rotation: -0.5,
+          color: "#ccc",
+          collisionType: "solid",
+          bounceFactor: 0.75
+        }
+      ],
+      bounds: {
+        left: 0,
+        top: 0,
+        right: 300,
+        bottom: 350,
+        bounceFactor: 0.95
+      }
+    };
+
+    // Класс для обработки физики
+    class PhysicsEngine {
+      // Столкновение круга с кругом
+      circleCircleCollision(ball, circle) {
+        const dx = ball.x - circle.x;
+        const dy = ball.y - circle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (ball.radius + circle.radius);
+      }
+
+      // Столкновение круга с эллипсом
+      circleEllipseCollision(ball, ellipse) {
+        // Учет поворота эллипса
+        const cos = Math.cos(ellipse.rotation || 0);
+        const sin = Math.sin(ellipse.rotation || 0);
+        
+        const dx = ball.x - ellipse.x;
+        const dy = ball.y - ellipse.y;
+        
+        // Поворот координат в систему эллипса
+        const rotatedX = dx * cos + dy * sin;
+        const rotatedY = -dx * sin + dy * cos;
+        
+        // Проверка столкновения
+        const normalized = (rotatedX * rotatedX) / (ellipse.radiusX * ellipse.radiusX) + 
+                          (rotatedY * rotatedY) / (ellipse.radiusY * ellipse.radiusY);
+        
+        return normalized <= 1 + (ball.radius / Math.min(ellipse.radiusX, ellipse.radiusY));
+      }
+
+      // Столкновение круга с полигоном
+      circlePolygonCollision(ball, polygon) {
+        for (let i = 0; i < polygon.points.length; i++) {
+          const p1 = polygon.points[i];
+          const p2 = polygon.points[(i + 1) % polygon.points.length];
+          
+          // Проверка столкновения с ребром
+          if (this.circleLineCollision(ball, p1, p2)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // Столкновение круга с отрезком
+      circleLineCollision(ball, p1, p2) {
+        // Вектор отрезка
+        const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
+        // Вектор от начала отрезка к центру шара
+        const ballVec = { x: ball.x - p1.x, y: ball.y - p1.y };
+        
+        const lineLengthSquared = lineVec.x * lineVec.x + lineVec.y * lineVec.y;
+        const dotProduct = ballVec.x * lineVec.x + ballVec.y * lineVec.y;
+        
+        let t = Math.max(0, Math.min(1, dotProduct / lineLengthSquared));
+        
+        // Ближайшая точка на отрезке
+        const closestPoint = {
+          x: p1.x + t * lineVec.x,
+          y: p1.y + t * lineVec.y
+        };
+        
+        // Расстояние до ближайшей точки
+        const dx = ball.x - closestPoint.x;
+        const dy = ball.y - closestPoint.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        return distance < ball.radius;
+      }
+
+      // Столкновение круга с дугой (упрощенно как с эллипсом)
+      circleArcCollision(ball, arc) {
+        // Для упрощения считаем дугу как часть эллипса
+        const ellipse = {
+          x: arc.x,
+          y: arc.y,
+          radiusX: arc.radiusX,
+          radiusY: arc.radiusY,
+          rotation: arc.rotation || 0
+        };
+        
+        if (!this.circleEllipseCollision(ball, ellipse)) {
+          return false;
+        }
+        
+        // Проверяем, что точка касания находится в пределах углов дуги
+        const angle = Math.atan2(ball.y - arc.y, ball.x - arc.x);
+        const normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
+        
+        return normalizedAngle >= arc.startAngle && normalizedAngle <= arc.endAngle;
+      }
+
+      // Расчет нормали отскока
+      calculateBounceNormal(ball, shape) {
+        let normal = { x: 0, y: 0 };
+        
+        switch (shape.type) {
+          case 'circle':
+            const dx = ball.x - shape.x;
+            const dy = ball.y - shape.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            normal = { x: dx / distance, y: dy / distance };
+            break;
+            
+          case 'ellipse':
+          case 'arc':
+            // Для эллипса/дуги нормаль зависит от положения точки касания
+            const cos = Math.cos(shape.rotation || 0);
+            const sin = Math.sin(shape.rotation || 0);
+            const localX = (ball.x - shape.x) * cos + (ball.y - shape.y) * sin;
+            const localY = -(ball.x - shape.x) * sin + (ball.y - shape.y) * cos;
+            
+            const gradientX = (2 * localX) / (shape.radiusX * shape.radiusX);
+            const gradientY = (2 * localY) / (shape.radiusY * shape.radiusY);
+            
+            // Поворот нормали обратно в глобальную систему
+            normal = {
+              x: gradientX * cos - gradientY * sin,
+              y: gradientX * sin + gradientY * cos
+            };
+            
+            const length = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+            normal.x /= length;
+            normal.y /= length;
+            break;
+            
+          case 'polygon':
+            // Для полигона находим ближайшее ребро
+            let minDistance = Infinity;
+            for (let i = 0; i < shape.points.length; i++) {
+              const p1 = shape.points[i];
+              const p2 = shape.points[(i + 1) % shape.points.length];
+              
+              const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
+              const toBall = { x: ball.x - p1.x, y: ball.y - p1.y };
+              
+              const edgeLength = Math.sqrt(edge.x * edge.x + edge.y * edge.y);
+              const edgeNormal = { x: -edge.y / edgeLength, y: edge.x / edgeLength };
+              
+              const distance = Math.abs(toBall.x * edgeNormal.x + toBall.y * edgeNormal.y);
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                normal = edgeNormal;
+              }
+            }
+            break;
+        }
+        
+        return normal;
+      }
+
+      // Обработка отскока
+      handleBounce(ball, shape, normal) {
+        const dotProduct = ball.vx * normal.x + ball.vy * normal.y;
+        
+        ball.vx = ball.vx - 2 * dotProduct * normal.x * shape.bounceFactor;
+        ball.vy = ball.vy - 2 * dotProduct * normal.y * shape.bounceFactor;
+        
+        // Коррекция позиции чтобы избежать залипания
+        const overlap = ball.radius;
+        
+        ball.x += normal.x * overlap * 1.1;
+        ball.y += normal.y * overlap * 1.1;
+      }
+    }
+
+    // Основной класс игры
+    class Game {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.physics = new PhysicsEngine();
+        this.isPaused = false;
+        
+        // Инициализация шарика
+        this.resetBall();
+        
+        // Статистика
+        this.collisionCount = 0;
+        
+        // Запуск игрового цикла
+        this.lastTime = 0;
+        this.animate(0);
+      }
+      
+      resetBall() {
+        this.ball = {
+          x: levelData.physics.ball.initialPosition.x,
+          y: levelData.physics.ball.initialPosition.y,
+          vx: levelData.physics.ball.initialVelocity.x,
+          vy: levelData.physics.ball.initialVelocity.y,
+          radius: levelData.physics.ball.radius
+        };
+        this.collisionCount = 0;
+      }
+      
+      togglePause() {
+        this.isPaused = !this.isPaused;
+        if (!this.isPaused) {
+          this.animate(0);
+        }
+        return this.isPaused;
+      }
+      
+      update(deltaTime) {
+        if (this.isPaused) return;
+        
+        // Движение шара
+        this.ball.x += this.ball.vx;
+        this.ball.y += this.ball.vy;
+
+        // Проверка столкновений с границами
+        if (this.ball.x - this.ball.radius < levelData.bounds.left) {
+          this.ball.vx = Math.abs(this.ball.vx) * levelData.bounds.bounceFactor;
+          this.ball.x = levelData.bounds.left + this.ball.radius;
+          this.collisionCount++;
+        } else if (this.ball.x + this.ball.radius > levelData.bounds.right) {
+          this.ball.vx = -Math.abs(this.ball.vx) * levelData.bounds.bounceFactor;
+          this.ball.x = levelData.bounds.right - this.ball.radius;
+          this.collisionCount++;
+        }
+        
+        if (this.ball.y - this.ball.radius < levelData.bounds.top) {
+          this.ball.vy = Math.abs(this.ball.vy) * levelData.bounds.bounceFactor;
+          this.ball.y = levelData.bounds.top + this.ball.radius;
+          this.collisionCount++;
+        } else if (this.ball.y + this.ball.radius > levelData.bounds.bottom) {
+          this.ball.vy = -Math.abs(this.ball.vy) * levelData.bounds.bounceFactor;
+          this.ball.y = levelData.bounds.bottom - this.ball.radius;
+          this.collisionCount++;
+        }
+
+        // Проверка столкновений с фигурами
+        levelData.collisionShapes.forEach(shape => {
+          let collision = false;
+          let normal = { x: 0, y: 0 };
+
+          switch (shape.type) {
+            case 'circle':
+              collision = this.physics.circleCircleCollision(this.ball, shape);
+              break;
+            case 'ellipse':
+              collision = this.physics.circleEllipseCollision(this.ball, shape);
+              break;
+            case 'polygon':
+              collision = this.physics.circlePolygonCollision(this.ball, shape);
+              break;
+            case 'arc':
+              collision = this.physics.circleArcCollision(this.ball, shape);
+              break;
+          }
+
+          if (collision) {
+            normal = this.physics.calculateBounceNormal(this.ball, shape);
+            this.physics.handleBounce(this.ball, shape, normal);
+            this.collisionCount++;
+          }
+        });
+      }
+      
+      draw() {
+        // Очистка холста
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисование фигур
+        levelData.collisionShapes.forEach(shape => {
+          this.ctx.fillStyle = shape.color;
+          
+          switch (shape.type) {
+            case 'circle':
+              this.ctx.beginPath();
+              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+              this.ctx.fill();
+              break;
+              
+            case 'ellipse':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+              
+            case 'polygon':
+              this.ctx.beginPath();
+              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+              for (let i = 1; i < shape.points.length; i++) {
+                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+              }
+              this.ctx.closePath();
+              this.ctx.fill();
+              break;
+              
+            case 'arc':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+          }
+        });
+        
+        // Рисование шарика
+        this.ctx.fillStyle = '#ff4444';
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Отображение статистики
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '14px Arial';
+        this.ctx.fillText(`Столкновений: ${this.collisionCount}`, 10, 20);
+        
+        if (this.isPaused) {
+          this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.fillStyle = 'white';
+          this.ctx.font = '24px Arial';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText('ПАУЗА', this.canvas.width / 2, this.canvas.height / 2);
+          this.ctx.textAlign = 'left';
+        }
+      }
+      
+      animate(timestamp) {
+        const deltaTime = timestamp - this.lastTime;
+        this.lastTime = timestamp;
+        
+        this.update(deltaTime);
+        this.draw();
+        
+        if (!this.isPaused) {
+          requestAnimationFrame(this.animate.bind(this));
+        }
+      }
+    }
+
+    // Инициализация игры после загрузки DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('gameCanvas');
+      const game = new Game(canvas);
+      
+      // Обработчики кнопок
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        game.resetBall();
+      });
+      
+      document.getElementById('pauseBtn').addEventListener('click', () => {
+        const isPaused = game.togglePause();
+        document.getElementById('pauseBtn').textContent = isPaused ? 'Продолжить' : 'Пауза';
+      });
+    });
+  </script>
+</body>
+</html>
