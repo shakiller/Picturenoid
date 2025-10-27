@@ -266,7 +266,7 @@
     // Уровни игры
     const levels = {
       "level1": {
-        name: "Простой уровень",
+        name: "Хаски",
         ball: {
           radius: 8,
           initialPosition: {x: 150, y: 300},
@@ -279,80 +279,169 @@
           color: "#4a4af0"
         },
         shapes: [
+          // Левое ухо
           {
             type: "rectangle",
-            id: "block1",
-            x: 50,
-            y: 80,
-            width: 60,
-            height: 20,
-            color: "#ff4444",
+            id: "left_ear_outer",
+            x: 60,
+            y: 50,
+            width: 40,
+            height: 60,
+            color: "#999",
             health: 1,
             score: 10
           },
           {
             type: "rectangle",
-            id: "block2",
-            x: 130,
-            y: 80,
-            width: 60,
-            height: 20,
-            color: "#44ff44",
+            id: "left_ear_inner",
+            x: 70,
+            y: 60,
+            width: 20,
+            height: 40,
+            color: "pink",
+            health: 1,
+            score: 15
+          },
+          // Правое ухо
+          {
+            type: "rectangle",
+            id: "right_ear_outer",
+            x: 200,
+            y: 50,
+            width: 40,
+            height: 60,
+            color: "#999",
             health: 1,
             score: 10
           },
           {
             type: "rectangle",
-            id: "block3",
+            id: "right_ear_inner",
             x: 210,
+            y: 60,
+            width: 20,
+            height: 40,
+            color: "pink",
+            health: 1,
+            score: 15
+          },
+          // Голова
+          {
+            type: "rectangle",
+            id: "head",
+            x: 80,
             y: 80,
-            width: 60,
+            width: 140,
+            height: 120,
+            color: "#fff",
+            health: 2,
+            score: 20
+          },
+          // Маска
+          {
+            type: "rectangle",
+            id: "mask",
+            x: 100,
+            y: 100,
+            width: 100,
+            height: 80,
+            color: "#999",
+            health: 2,
+            score: 25
+          },
+          // Левый глаз
+          {
+            type: "rectangle",
+            id: "left_eye",
+            x: 110,
+            y: 110,
+            width: 15,
             height: 20,
-            color: "#4444ff",
+            color: "#000",
+            health: 1,
+            score: 5
+          },
+          // Правый глаз
+          {
+            type: "rectangle",
+            id: "right_eye",
+            x: 175,
+            y: 110,
+            width: 15,
+            height: 20,
+            color: "#000",
+            health: 1,
+            score: 5
+          },
+          // Нос
+          {
+            type: "rectangle",
+            id: "nose",
+            x: 145,
+            y: 140,
+            width: 15,
+            height: 15,
+            color: "#000",
+            health: 3,
+            score: 30
+          },
+          // Язык
+          {
+            type: "rectangle",
+            id: "tongue",
+            x: 140,
+            y: 155,
+            width: 25,
+            height: 10,
+            color: "pink",
             health: 1,
             score: 10
           },
+          // Тело
           {
             type: "rectangle",
-            id: "block4",
-            x: 290,
-            y: 80,
-            width: 60,
-            height: 20,
-            color: "#ffff44",
-            health: 1,
-            score: 10
+            id: "body",
+            x: 100,
+            y: 200,
+            width: 100,
+            height: 80,
+            color: "#ccc",
+            health: 3,
+            score: 30
           },
+          // Левая лапа
           {
             type: "rectangle",
-            id: "block5",
+            id: "left_paw",
             x: 90,
-            y: 120,
-            width: 60,
-            height: 20,
-            color: "#ff44ff",
+            y: 280,
+            width: 30,
+            height: 40,
+            color: "#fff",
             health: 2,
-            score: 20
+            score: 15
           },
+          // Правая лапа
           {
             type: "rectangle",
-            id: "block6",
-            x: 170,
-            y: 120,
-            width: 60,
-            height: 20,
-            color: "#44ffff",
+            id: "right_paw",
+            x: 180,
+            y: 280,
+            width: 30,
+            height: 40,
+            color: "#fff",
             health: 2,
-            score: 20
+            score: 15
           },
+          // Хвост
           {
             type: "rectangle",
-            id: "block7",
-            x: 250,
-            y: 120,
-            width: 60,
-            height: 20,
-            color: "#ff9966",
+            id: "tail",
+            x: 200,
+            y: 220,
+            width: 40,
+            height: 15,
+            color: "#ccc",
             health: 2,
             score: 20
           }
@@ -360,16 +449,16 @@
         bounds: {
           left: 0,
           top: 0,
-          right: 400,
-          bottom: 500,
+          right: 300,
+          bottom: 400,
           bounceFactor: 0.95
         }
       },
       "level2": {
-        name: "Средний уровень",
+        name: "Геометрические фигуры",
         ball: {
           radius: 8,
-          initialPosition: {x: 200, y: 350},
+          initialPosition: {x: 150, y: 300},
           initialVelocity: {x: 4, y: -5}
         },
         paddle: {
@@ -383,7 +472,7 @@
             type: "rectangle",
             id: "block1",
             x: 30,
-            y: 60,
+            y: 50,
             width: 50,
             height: 20,
             color: "#ff4444",
@@ -394,7 +483,7 @@
             type: "rectangle",
             id: "block2",
             x: 100,
-            y: 60,
+            y: 50,
             width: 50,
             height: 20,
             color: "#44ff44",
@@ -405,7 +494,7 @@
             type: "rectangle",
             id: "block3",
             x: 170,
-            y: 60,
+            y: 50,
             width: 50,
             height: 20,
             color: "#4444ff",
@@ -415,8 +504,8 @@
           {
             type: "rectangle",
             id: "block4",
-            x: 240,
-            y: 60,
+            x: 30,
+            y: 90,
             width: 50,
             height: 20,
             color: "#ffff44",
@@ -426,19 +515,19 @@
           {
             type: "rectangle",
             id: "block5",
-            x: 310,
-            y: 60,
+            x: 100,
+            y: 90,
             width: 50,
             height: 20,
             color: "#ff44ff",
-            health: 1,
-            score: 10
+            health: 3,
+            score: 30
           },
           {
             type: "rectangle",
             id: "block6",
-            x: 60,
-            y: 100,
+            x: 170,
+            y: 90,
             width: 50,
             height: 20,
             color: "#44ffff",
@@ -448,42 +537,42 @@
           {
             type: "rectangle",
             id: "block7",
-            x: 130,
-            y: 100,
+            x: 30,
+            y: 130,
             width: 50,
             height: 20,
             color: "#ff9966",
-            health: 3,
-            score: 30
+            health: 1,
+            score: 10
           },
           {
             type: "rectangle",
             id: "block8",
-            x: 200,
-            y: 100,
+            x: 100,
+            y: 130,
             width: 50,
             height: 20,
             color: "#99ff66",
-            health: 3,
-            score: 30
+            health: 2,
+            score: 20
           },
           {
             type: "rectangle",
             id: "block9",
-            x: 270,
-            y: 100,
+            x: 170,
+            y: 130,
             width: 50,
             height: 20,
             color: "#6699ff",
-            health: 2,
-            score: 20
+            health: 3,
+            score: 30
           }
         ],
         bounds: {
           left: 0,
           top: 0,
-          right: 400,
-          bottom: 500,
+          right: 300,
+          bottom: 400,
           bounceFactor: 0.95
         }
       },
@@ -491,7 +580,7 @@
         name: "Сложный уровень",
         ball: {
           radius: 8,
-          initialPosition: {x: 200, y: 400},
+          initialPosition: {x: 150, y: 350},
           initialVelocity: {x: 5, y: -5}
         },
         paddle: {
@@ -505,8 +594,8 @@
             type: "rectangle",
             id: "block1",
             x: 20,
-            y: 50,
-            width: 45,
+            y: 40,
+            width: 40,
             height: 20,
             color: "#ff4444",
             health: 2,
@@ -515,9 +604,9 @@
           {
             type: "rectangle",
             id: "block2",
-            x: 75,
-            y: 50,
-            width: 45,
+            x: 70,
+            y: 40,
+            width: 40,
             height: 20,
             color: "#44ff44",
             health: 3,
@@ -526,9 +615,9 @@
           {
             type: "rectangle",
             id: "block3",
-            x: 130,
-            y: 50,
-            width: 45,
+            x: 120,
+            y: 40,
+            width: 40,
             height: 20,
             color: "#4444ff",
             health: 2,
@@ -537,9 +626,9 @@
           {
             type: "rectangle",
             id: "block4",
-            x: 185,
-            y: 50,
-            width: 45,
+            x: 170,
+            y: 40,
+            width: 40,
             height: 20,
             color: "#ffff44",
             health: 3,
@@ -548,9 +637,9 @@
           {
             type: "rectangle",
             id: "block5",
-            x: 240,
-            y: 50,
-            width: 45,
+            x: 220,
+            y: 40,
+            width: 40,
             height: 20,
             color: "#ff44ff",
             health: 2,
@@ -559,9 +648,9 @@
           {
             type: "rectangle",
             id: "block6",
-            x: 295,
-            y: 50,
-            width: 45,
+            x: 45,
+            y: 80,
+            width: 40,
             height: 20,
             color: "#44ffff",
             health: 3,
@@ -570,9 +659,9 @@
           {
             type: "rectangle",
             id: "block7",
-            x: 50,
-            y: 90,
-            width: 45,
+            x: 95,
+            y: 80,
+            width: 40,
             height: 20,
             color: "#ff9966",
             health: 1,
@@ -581,9 +670,9 @@
           {
             type: "rectangle",
             id: "block8",
-            x: 105,
-            y: 90,
-            width: 45,
+            x: 145,
+            y: 80,
+            width: 40,
             height: 20,
             color: "#99ff66",
             health: 2,
@@ -592,9 +681,9 @@
           {
             type: "rectangle",
             id: "block9",
-            x: 160,
-            y: 90,
-            width: 45,
+            x: 195,
+            y: 80,
+            width: 40,
             height: 20,
             color: "#6699ff",
             health: 3,
@@ -603,9 +692,9 @@
           {
             type: "rectangle",
             id: "block10",
-            x: 215,
-            y: 90,
-            width: 45,
+            x: 70,
+            y: 120,
+            width: 40,
             height: 20,
             color: "#ff66cc",
             health: 2,
@@ -614,9 +703,9 @@
           {
             type: "rectangle",
             id: "block11",
-            x: 270,
-            y: 90,
-            width: 45,
+            x: 120,
+            y: 120,
+            width: 40,
             height: 20,
             color: "#66ffcc",
             health: 1,
@@ -625,33 +714,11 @@
           {
             type: "rectangle",
             id: "block12",
-            x: 100,
-            y: 130,
-            width: 45,
+            x: 170,
+            y: 120,
+            width: 40,
             height: 20,
             color: "#cc66ff",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block13",
-            x: 155,
-            y: 130,
-            width: 45,
-            height: 20,
-            color: "#ffcc66",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block14",
-            x: 210,
-            y: 130,
-            width: 45,
-            height: 20,
-            color: "#66ccff",
             health: 3,
             score: 30
           }
@@ -659,8 +726,8 @@
         bounds: {
           left: 0,
           top: 0,
-          right: 400,
-          bottom: 500,
+          right: 300,
+          bottom: 400,
           bounceFactor: 0.95
         }
       }
@@ -781,6 +848,12 @@
         if (this.bounds) {
           this.bounds.right = this.canvas.width;
           this.bounds.bottom = this.canvas.height;
+          
+          // Обновляем позицию платформы
+          if (this.paddle) {
+            this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
+            this.paddle.y = this.canvas.height - 30;
+          }
         }
       }
       
