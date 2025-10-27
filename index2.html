@@ -15,7 +15,7 @@
       user-select: none;
     }
     body {
-      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      background: linear-gradient(135deg, #0c1445, #1a237e, #283593);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: white;
       height: 100vh;
@@ -42,14 +42,14 @@
     h1 {
       font-size: 1.8rem;
       margin-bottom: 5px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
     }
     .game-container {
       position: relative;
       background: #222;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
       width: 100%;
       flex: 1;
       max-height: 60vh;
@@ -76,6 +76,7 @@
       padding: 8px 12px;
       border-radius: 6px;
       font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     .controls {
       display: flex;
@@ -93,15 +94,17 @@
       font-size: 1rem;
       font-weight: bold;
       transition: all 0.3s;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       flex: 1;
       max-width: 140px;
     }
     button:hover {
       background: #5a5aff;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
     }
     button:active {
       transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
     button#pauseBtn.paused {
       background: #f04a4a;
@@ -114,6 +117,7 @@
       padding: 15px;
       border-radius: 10px;
       width: 100%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .level-selector h2 {
       margin-bottom: 10px;
@@ -134,12 +138,15 @@
       transition: all 0.3s;
       white-space: nowrap;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     .level-item:hover {
       background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .level-item.active {
       background: #4a4af0;
+      box-shadow: 0 4px 12px rgba(74, 74, 240, 0.4);
     }
     .instructions {
       background: rgba(255, 255, 255, 0.1);
@@ -147,6 +154,7 @@
       border-radius: 10px;
       width: 100%;
       font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .instructions h2 {
       margin-bottom: 8px;
@@ -170,6 +178,7 @@
       display: none;
       width: 80%;
       max-width: 300px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
     }
     .game-over h2 {
       font-size: 1.8rem;
@@ -200,9 +209,11 @@
       font-size: 1.5rem;
       pointer-events: auto;
       touch-action: manipulation;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     .touch-btn:active {
       background: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     @media (max-height: 700px) {
       .instructions {
@@ -1102,17 +1113,34 @@
         this.ctx.fillStyle = '#111';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Рисование платформы
+        // Рисование платформы с тенью
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowOffsetX = 3;
+        this.ctx.shadowOffsetY = 3;
+        
         this.ctx.fillStyle = this.paddle.color;
         this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
         
-        // Рисование фигур
+        // Сбрасываем тень для фигур
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
+        
+        // Рисование фигур с тенями
         this.shapes.forEach(shape => {
           if (!shape.active) return;
           
           // Прозрачность в зависимости от здоровья
           const alpha = shape.health / shape.initialHealth;
           this.ctx.globalAlpha = alpha;
+          
+          // Тень для фигуры
+          this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          this.ctx.shadowBlur = 8;
+          this.ctx.shadowOffsetX = 2;
+          this.ctx.shadowOffsetY = 2;
           
           this.ctx.fillStyle = shape.color;
           
@@ -1154,14 +1182,31 @@
               break;
           }
           
+          // Сбрасываем тень
+          this.ctx.shadowColor = 'transparent';
+          this.ctx.shadowBlur = 0;
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 0;
+          
           this.ctx.globalAlpha = 1;
         });
         
-        // Рисование шарика
+        // Рисование шарика с тенью
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.shadowBlur = 6;
+        this.ctx.shadowOffsetX = 2;
+        this.ctx.shadowOffsetY = 2;
+        
         this.ctx.fillStyle = '#ff4444';
         this.ctx.beginPath();
         this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
         this.ctx.fill();
+        
+        // Сбрасываем тень для границ
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 0;
         
         // Рисование границ
         this.ctx.strokeStyle = '#444';
