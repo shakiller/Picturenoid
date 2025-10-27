@@ -53,11 +53,13 @@
       width: 100%;
       flex: 1;
       max-height: 60vh;
+      touch-action: none;
     }
     canvas {
       display: block;
       width: 100%;
       height: 100%;
+      touch-action: none;
     }
     .ui-overlay {
       position: absolute;
@@ -264,7 +266,7 @@
     <div class="instructions">
       <h2>Как играть:</h2>
       <ul>
-        <li>Двигайте платформу кнопками внизу</li>
+        <li>Двигайте платформу пальцем по экрану или кнопками внизу</li>
         <li>Отбивайте шарик и разбивайте фигуры</li>
         <li>Каждая фигура дает очки</li>
         <li>Цель - разбить все фигуры</li>
@@ -784,6 +786,15 @@
         this.currentLevel = 'level1';
         this.score = 0;
         
+        // Для шлейфа шарика
+        this.ballTrail = [];
+        this.maxTrailLength = 15;
+        
+        // Для управления пальцем
+        this.touchStartX = 0;
+        this.paddleStartX = 0;
+        this.isDragging = false;
+        
         // Установка размеров холста
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -891,6 +902,9 @@
         // Сброс шарика
         this.resetBall();
         
+        // Очистка шлейфа
+        this.ballTrail = [];
+        
         // Обновление UI
         this.updateUI();
         
@@ -910,6 +924,9 @@
           vy: level.ball.initialVelocity.y * scaleY,
           radius: level.ball.radius * Math.min(scaleX, scaleY)
         };
+        
+        // Очистка шлейфа при сбросе шарика
+        this.ballTrail = [];
       }
       
       setupEventListeners() {
@@ -964,6 +981,44 @@
           if (e.key === 'ArrowRight') this.paddleMovingRight = false;
         });
         
+        // Управление пальцем по всему экрану
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const rect = this.canvas.getBoundingClientRect();
+          this.touchStartX = touch.clientX - rect.left;
+          this.paddleStartX = this.paddle.x;
+          this.isDragging = true;
+        });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+          if (!this.isDragging) return;
+          e.preventDefault();
+          
+          const touch = e.touches[0];
+          const rect = this.canvas.getBoundingClientRect();
+          const touchX = touch.clientX - rect.left;
+          
+          // Вычисляем смещение и перемещаем платформу
+          const deltaX = touchX - this.touchStartX;
+          let newPaddleX = this.paddleStartX + deltaX;
+          
+          // Ограничиваем движение платформы границами экрана
+          newPaddleX = Math.max(0, Math.min(this.canvas.width - this.paddle.width, newPaddleX));
+          
+          this.paddle.x = newPaddleX;
+        });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          this.isDragging = false;
+        });
+        
+        this.canvas.addEventListener('touchcancel', (e) => {
+          e.preventDefault();
+          this.isDragging = false;
+        });
+        
         // Инициализация списка уровней
         this.updateLevelList();
       }
@@ -1016,6 +1071,24 @@
         // Движение шара
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
+
+        // Добавляем позицию в шлейф
+        this.ballTrail.push({
+          x: this.ball.x,
+          y: this.ball.y,
+          radius: this.ball.radius,
+          alpha: 1.0
+        });
+        
+        // Ограничиваем длину шлейфа
+        if (this.ballTrail.length > this.maxTrailLength) {
+          this.ballTrail.shift();
+        }
+        
+        // Уменьшаем прозрачность элементов шлейфа
+        this.ballTrail.forEach((point, index) => {
+          point.alpha = index / this.ballTrail.length;
+        });
 
         // Проверка столкновений с границами - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
         if (this.ball.x - this.ball.radius < this.bounds.left) {
@@ -1117,6 +1190,23 @@
         // Очистка холста с градиентом
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисование шлейфа шарика
+        this.ballTrail.forEach((point, index) => {
+          if (index === 0) return; // Пропускаем первую точку (текущее положение шарика)
+          
+          this.ctx.globalAlpha = point.alpha * 0.6;
+          this.ctx.fillStyle = `rgba(255, 100, 100, ${point.alpha})`;
+          
+          // Уменьшаем размер точек шлейфа
+          const trailRadius = point.radius * point.alpha;
+          
+          this.ctx.beginPath();
+          this.ctx.arc(point.x, point.y, trailRadius, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+        
+        this.ctx.globalAlpha = 1;
         
         // Рисование платформы с тенью
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
