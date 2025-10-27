@@ -270,7 +270,7 @@
         ball: {
           radius: 8,
           initialPosition: {x: 200, y: 400},
-          initialVelocity: {x: 3, y: -4}
+          initialVelocity: {x: 4, y: -5}
         },
         paddle: {
           width: 80,
@@ -456,7 +456,7 @@
           top: 0,
           right: 400,
           bottom: 500,
-          bounceFactor: 0.95
+          bounceFactor: 1.0 // Убрали потерю энергии
         }
       },
       "level2": {
@@ -464,7 +464,7 @@
         ball: {
           radius: 8,
           initialPosition: {x: 200, y: 400},
-          initialVelocity: {x: 4, y: -5}
+          initialVelocity: {x: 5, y: -6}
         },
         paddle: {
           width: 70,
@@ -551,7 +551,7 @@
           top: 0,
           right: 400,
           bottom: 500,
-          bounceFactor: 0.95
+          bounceFactor: 1.0 // Убрали потерю энергии
         }
       }
     };
@@ -715,15 +715,13 @@
         return normal;
       }
 
-      // Обработка отскока
+      // Обработка отскока - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
       handleBounce(ball, shape, normal) {
         const dotProduct = ball.vx * normal.x + ball.vy * normal.y;
         
-        // Коэффициент отскока зависит от типа фигуры
-        const bounceFactor = 0.8;
-        
-        ball.vx = ball.vx - 2 * dotProduct * normal.x * bounceFactor;
-        ball.vy = ball.vy - 2 * dotProduct * normal.y * bounceFactor;
+        // Убрали коэффициент отскока - теперь энергия сохраняется
+        ball.vx = ball.vx - 2 * dotProduct * normal.x;
+        ball.vy = ball.vy - 2 * dotProduct * normal.y;
         
         // Коррекция позиции чтобы избежать залипания
         const overlap = ball.radius + 2;
@@ -732,7 +730,7 @@
         ball.y += normal.y * overlap;
       }
 
-      // Отскок от платформы с учетом угла
+      // Отскок от платформы с учетом угла - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
       handlePaddleBounce(ball, paddle) {
         // Вычисляем относительное положение удара по платформе (-1 до 1)
         const hitPos = (ball.x - paddle.x) / paddle.width - 0.5;
@@ -740,7 +738,7 @@
         // Угол отскока зависит от позиции удара
         const angle = hitPos * Math.PI / 3; // Максимальный угол 60 градусов
         
-        // Скорость шарика
+        // Сохраняем скорость (убрали потерю энергии)
         const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
         
         // Новое направление
@@ -1009,17 +1007,17 @@
         this.ball.x += this.ball.vx;
         this.ball.y += this.ball.vy;
 
-        // Проверка столкновений с границами
+        // Проверка столкновений с границами - УБРАЛИ ПОТЕРЮ ЭНЕРГИИ
         if (this.ball.x - this.ball.radius < this.bounds.left) {
-          this.ball.vx = Math.abs(this.ball.vx) * this.bounds.bounceFactor;
+          this.ball.vx = Math.abs(this.ball.vx);
           this.ball.x = this.bounds.left + this.ball.radius;
         } else if (this.ball.x + this.ball.radius > this.bounds.right) {
-          this.ball.vx = -Math.abs(this.ball.vx) * this.bounds.bounceFactor;
+          this.ball.vx = -Math.abs(this.ball.vx);
           this.ball.x = this.bounds.right - this.ball.radius;
         }
         
         if (this.ball.y - this.ball.radius < this.bounds.top) {
-          this.ball.vy = Math.abs(this.ball.vy) * this.bounds.bounceFactor;
+          this.ball.vy = Math.abs(this.ball.vy);
           this.ball.y = this.bounds.top + this.ball.radius;
         } else if (this.ball.y + this.ball.radius > this.bounds.bottom) {
           // Шарик ушел за нижнюю границу - перезапуск
