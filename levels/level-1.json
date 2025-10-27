@@ -1,165 +1,182 @@
 {
   "name": "Хаски",
-  "physics": {
-    "ball": {
-      "radius": 5,
-      "initialPosition": {"x": 50, "y": 50},
-      "initialVelocity": {"x": 3, "y": 2}
-    }
+  "ball": {
+    "radius": 8,
+    "initialPosition": {"x": 200, "y": 400},
+    "initialVelocity": {"x": 4, "y": -5}
   },
-  "collisionShapes": [
+  "paddle": {
+    "width": 80,
+    "height": 15,
+    "speed": 8,
+    "color": "#4a4af0"
+  },
+  "shapes": [
     {
       "type": "polygon",
       "id": "left_ear_outer",
       "points": [
-        {"x": 70, "y": 40},
-        {"x": 100, "y": -20},
-        {"x": 130, "y": 40}
+        {"x": 80, "y": 50},
+        {"x": 110, "y": 20},
+        {"x": 140, "y": 50}
       ],
-      "collisionType": "solid",
-      "bounceFactor": 0.8
+      "color": "#999",
+      "health": 1,
+      "score": 10
     },
     {
       "type": "polygon",
       "id": "left_ear_inner",
       "points": [
-        {"x": 85, "y": 30},
-        {"x": 100, "y": -5},
-        {"x": 115, "y": 30}
+        {"x": 95, "y": 40},
+        {"x": 110, "y": 25},
+        {"x": 125, "y": 40}
       ],
-      "collisionType": "solid",
-      "bounceFactor": 0.7
+      "color": "pink",
+      "health": 1,
+      "score": 15
     },
     {
       "type": "polygon",
       "id": "right_ear_outer",
       "points": [
-        {"x": 170, "y": 40},
-        {"x": 140, "y": -20},
-        {"x": 110, "y": 40}
+        {"x": 260, "y": 50},
+        {"x": 290, "y": 20},
+        {"x": 320, "y": 50}
       ],
-      "collisionType": "solid",
-      "bounceFactor": 0.8
+      "color": "#999",
+      "health": 1,
+      "score": 10
     },
     {
       "type": "polygon",
-      "id": "right_ear_inner", 
+      "id": "right_ear_inner",
       "points": [
-        {"x": 155, "y": 30},
-        {"x": 140, "y": -5},
-        {"x": 125, "y": 30}
+        {"x": 275, "y": 40},
+        {"x": 290, "y": 25},
+        {"x": 305, "y": 40}
       ],
-      "collisionType": "solid",
-      "bounceFactor": 0.7
+      "color": "pink",
+      "health": 1,
+      "score": 15
     },
     {
       "type": "circle",
       "id": "head",
-      "x": 150,
-      "y": 120,
-      "radius": 80,
-      "collisionType": "solid",
-      "bounceFactor": 0.9
+      "x": 200,
+      "y": 130,
+      "radius": 70,
+      "color": "#fff",
+      "health": 2,
+      "score": 20
     },
     {
       "type": "ellipse",
       "id": "mask",
-      "x": 150,
-      "y": 120,
-      "radiusX": 50,
-      "radiusY": 80,
-      "collisionType": "solid",
-      "bounceFactor": 0.85
+      "x": 200,
+      "y": 130,
+      "radiusX": 45,
+      "radiusY": 65,
+      "color": "#999",
+      "health": 2,
+      "score": 25
     },
     {
       "type": "ellipse",
       "id": "left_eye",
-      "x": 120,
-      "y": 110,
-      "radiusX": 10,
-      "radiusY": 15,
-      "collisionType": "solid",
-      "bounceFactor": 0.6
+      "x": 180,
+      "y": 120,
+      "radiusX": 8,
+      "radiusY": 12,
+      "color": "#000",
+      "health": 1,
+      "score": 5
     },
     {
       "type": "ellipse",
       "id": "right_eye",
-      "x": 180,
-      "y": 110,
-      "radiusX": 10,
-      "radiusY": 15,
-      "collisionType": "solid",
-      "bounceFactor": 0.6
+      "x": 220,
+      "y": 120,
+      "radiusX": 8,
+      "radiusY": 12,
+      "color": "#000",
+      "health": 1,
+      "score": 5
     },
     {
       "type": "circle",
       "id": "nose",
-      "x": 150,
-      "y": 145,
-      "radius": 8,
-      "collisionType": "solid", 
-      "bounceFactor": 0.5
+      "x": 200,
+      "y": 150,
+      "radius": 10,
+      "color": "#000",
+      "health": 3,
+      "score": 30
     },
     {
       "type": "arc",
       "id": "tongue",
-      "x": 150,
+      "x": 200,
       "y": 165,
-      "radiusX": 12,
-      "radiusY": 8,
+      "radiusX": 15,
+      "radiusY": 10,
       "startAngle": 0,
-      "endAngle": 3.14159,
-      "collisionType": "bouncy",
-      "bounceFactor": 1.2
+      "endAngle": 3.141592653589793,
+      "color": "pink",
+      "health": 1,
+      "score": 10
     },
     {
       "type": "ellipse",
       "id": "body",
-      "x": 150,
-      "y": 250,
-      "radiusX": 70,
-      "radiusY": 50,
-      "collisionType": "solid",
-      "bounceFactor": 0.8
+      "x": 200,
+      "y": 230,
+      "radiusX": 60,
+      "radiusY": 40,
+      "color": "#ccc",
+      "health": 3,
+      "score": 30
     },
     {
-      "type": "ellipse", 
+      "type": "ellipse",
       "id": "left_paw",
-      "x": 110,
-      "y": 300,
-      "radiusX": 20,
-      "radiusY": 12,
-      "collisionType": "solid",
-      "bounceFactor": 0.7
+      "x": 160,
+      "y": 270,
+      "radiusX": 15,
+      "radiusY": 10,
+      "color": "#fff",
+      "health": 2,
+      "score": 15
     },
     {
       "type": "ellipse",
       "id": "right_paw",
-      "x": 190,
-      "y": 300,
-      "radiusX": 20,
-      "radiusY": 12,
-      "collisionType": "solid",
-      "bounceFactor": 0.7
+      "x": 240,
+      "y": 270,
+      "radiusX": 15,
+      "radiusY": 10,
+      "color": "#fff",
+      "health": 2,
+      "score": 15
     },
     {
       "type": "ellipse",
       "id": "tail",
-      "x": 220,
-      "y": 270,
-      "radiusX": 30,
-      "radiusY": 15,
-      "rotation": -0.5,
-      "collisionType": "solid",
-      "bounceFactor": 0.75
+      "x": 250,
+      "y": 210,
+      "radiusX": 25,
+      "radiusY": 12,
+      "rotation": -0.7,
+      "color": "#ccc",
+      "health": 2,
+      "score": 20
     }
   ],
-  "renderOrder": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   "bounds": {
     "left": 0,
     "top": 0,
-    "right": 300,
-    "bottom": 350,
-    "bounceFactor": 0.95
+    "right": 400,
+    "bottom": 500,
+    "bounceFactor": 1.0
   }
 }
