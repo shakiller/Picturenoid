@@ -281,166 +281,171 @@
         shapes: [
           // Левое ухо
           {
-            type: "rectangle",
+            type: "polygon",
             id: "left_ear_outer",
-            x: 60,
-            y: 50,
-            width: 40,
-            height: 60,
+            points: [
+              {x: 60, y: 40},
+              {x: 90, y: 10},
+              {x: 120, y: 40}
+            ],
             color: "#999",
             health: 1,
             score: 10
           },
           {
-            type: "rectangle",
+            type: "polygon",
             id: "left_ear_inner",
-            x: 70,
-            y: 60,
-            width: 20,
-            height: 40,
+            points: [
+              {x: 75, y: 30},
+              {x: 90, y: 15},
+              {x: 105, y: 30}
+            ],
             color: "pink",
             health: 1,
             score: 15
           },
           // Правое ухо
           {
-            type: "rectangle",
+            type: "polygon",
             id: "right_ear_outer",
-            x: 200,
-            y: 50,
-            width: 40,
-            height: 60,
+            points: [
+              {x: 180, y: 40},
+              {x: 210, y: 10},
+              {x: 240, y: 40}
+            ],
             color: "#999",
             health: 1,
             score: 10
           },
           {
-            type: "rectangle",
+            type: "polygon",
             id: "right_ear_inner",
-            x: 210,
-            y: 60,
-            width: 20,
-            height: 40,
+            points: [
+              {x: 195, y: 30},
+              {x: 210, y: 15},
+              {x: 225, y: 30}
+            ],
             color: "pink",
             health: 1,
             score: 15
           },
           // Голова
           {
-            type: "rectangle",
+            type: "circle",
             id: "head",
-            x: 80,
-            y: 80,
-            width: 140,
-            height: 120,
+            x: 150,
+            y: 120,
+            radius: 70,
             color: "#fff",
             health: 2,
             score: 20
           },
           // Маска
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "mask",
-            x: 100,
-            y: 100,
-            width: 100,
-            height: 80,
+            x: 150,
+            y: 120,
+            radiusX: 45,
+            radiusY: 65,
             color: "#999",
             health: 2,
             score: 25
           },
           // Левый глаз
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "left_eye",
-            x: 110,
+            x: 130,
             y: 110,
-            width: 15,
-            height: 20,
+            radiusX: 8,
+            radiusY: 12,
             color: "#000",
             health: 1,
             score: 5
           },
           // Правый глаз
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "right_eye",
-            x: 175,
+            x: 170,
             y: 110,
-            width: 15,
-            height: 20,
+            radiusX: 8,
+            radiusY: 12,
             color: "#000",
             health: 1,
             score: 5
           },
           // Нос
           {
-            type: "rectangle",
+            type: "circle",
             id: "nose",
-            x: 145,
+            x: 150,
             y: 140,
-            width: 15,
-            height: 15,
+            radius: 10,
             color: "#000",
             health: 3,
             score: 30
           },
           // Язык
           {
-            type: "rectangle",
+            type: "arc",
             id: "tongue",
-            x: 140,
+            x: 150,
             y: 155,
-            width: 25,
-            height: 10,
+            radiusX: 15,
+            radiusY: 10,
+            startAngle: 0,
+            endAngle: Math.PI,
             color: "pink",
             health: 1,
             score: 10
           },
           // Тело
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "body",
-            x: 100,
-            y: 200,
-            width: 100,
-            height: 80,
+            x: 150,
+            y: 220,
+            radiusX: 60,
+            radiusY: 40,
             color: "#ccc",
             health: 3,
             score: 30
           },
           // Левая лапа
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "left_paw",
-            x: 90,
-            y: 280,
-            width: 30,
-            height: 40,
+            x: 110,
+            y: 260,
+            radiusX: 15,
+            radiusY: 10,
             color: "#fff",
             health: 2,
             score: 15
           },
           // Правая лапа
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "right_paw",
-            x: 180,
-            y: 280,
-            width: 30,
-            height: 40,
+            x: 190,
+            y: 260,
+            radiusX: 15,
+            radiusY: 10,
             color: "#fff",
             health: 2,
             score: 15
           },
           // Хвост
           {
-            type: "rectangle",
+            type: "ellipse",
             id: "tail",
             x: 200,
-            y: 220,
-            width: 40,
-            height: 15,
+            y: 200,
+            radiusX: 25,
+            radiusY: 12,
+            rotation: -0.7,
             color: "#ccc",
             health: 2,
             score: 20
@@ -469,103 +474,76 @@
         },
         shapes: [
           {
-            type: "rectangle",
-            id: "block1",
-            x: 30,
-            y: 50,
-            width: 50,
-            height: 20,
+            type: "circle",
+            id: "circle1",
+            x: 80,
+            y: 80,
+            radius: 25,
             color: "#ff4444",
-            health: 1,
-            score: 10
+            health: 2,
+            score: 20
           },
           {
-            type: "rectangle",
-            id: "block2",
-            x: 100,
-            y: 50,
-            width: 50,
-            height: 20,
+            type: "circle",
+            id: "circle2",
+            x: 220,
+            y: 80,
+            radius: 25,
             color: "#44ff44",
             health: 2,
             score: 20
           },
           {
-            type: "rectangle",
-            id: "block3",
-            x: 170,
-            y: 50,
-            width: 50,
-            height: 20,
+            type: "ellipse",
+            id: "ellipse1",
+            x: 150,
+            y: 70,
+            radiusX: 40,
+            radiusY: 20,
             color: "#4444ff",
-            health: 1,
-            score: 10
+            health: 3,
+            score: 30
           },
           {
-            type: "rectangle",
-            id: "block4",
-            x: 30,
-            y: 90,
-            width: 50,
-            height: 20,
+            type: "polygon",
+            id: "triangle",
+            points: [
+              {x: 100, y: 150},
+              {x: 150, y: 100},
+              {x: 200, y: 150}
+            ],
             color: "#ffff44",
             health: 2,
-            score: 20
+            score: 25
           },
           {
-            type: "rectangle",
-            id: "block5",
-            x: 100,
-            y: 90,
-            width: 50,
-            height: 20,
+            type: "polygon",
+            id: "pentagon",
+            points: [
+              {x: 60, y: 200},
+              {x: 90, y: 170},
+              {x: 120, y: 200},
+              {x: 110, y: 230},
+              {x: 70, y: 230}
+            ],
             color: "#ff44ff",
             health: 3,
-            score: 30
+            score: 35
           },
           {
-            type: "rectangle",
-            id: "block6",
-            x: 170,
-            y: 90,
-            width: 50,
-            height: 20,
+            type: "polygon",
+            id: "hexagon",
+            points: [
+              {x: 180, y: 200},
+              {x: 210, y: 185},
+              {x: 240, y: 200},
+              {x: 240, y: 230},
+              {x: 210, y: 245},
+              {x: 180, y: 230}
+            ],
             color: "#44ffff",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block7",
-            x: 30,
-            y: 130,
-            width: 50,
-            height: 20,
-            color: "#ff9966",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "rectangle",
-            id: "block8",
-            x: 100,
-            y: 130,
-            width: 50,
-            height: 20,
-            color: "#99ff66",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block9",
-            x: 170,
-            y: 130,
-            width: 50,
-            height: 20,
-            color: "#6699ff",
             health: 3,
-            score: 30
+            score: 35
           }
         ],
         bounds: {
@@ -577,7 +555,7 @@
         }
       },
       "level3": {
-        name: "Сложный уровень",
+        name: "Случайные препятствия",
         ball: {
           radius: 8,
           initialPosition: {x: 150, y: 350},
@@ -591,136 +569,92 @@
         },
         shapes: [
           {
-            type: "rectangle",
-            id: "block1",
-            x: 20,
-            y: 40,
-            width: 40,
-            height: 20,
-            color: "#ff4444",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block2",
-            x: 70,
-            y: 40,
-            width: 40,
-            height: 20,
-            color: "#44ff44",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block3",
-            x: 120,
-            y: 40,
-            width: 40,
-            height: 20,
-            color: "#4444ff",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block4",
-            x: 170,
-            y: 40,
-            width: 40,
-            height: 20,
-            color: "#ffff44",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block5",
-            x: 220,
-            y: 40,
-            width: 40,
-            height: 20,
-            color: "#ff44ff",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block6",
-            x: 45,
-            y: 80,
-            width: 40,
-            height: 20,
-            color: "#44ffff",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block7",
-            x: 95,
-            y: 80,
-            width: 40,
-            height: 20,
-            color: "#ff9966",
+            type: "circle",
+            id: "c1",
+            x: 50,
+            y: 60,
+            radius: 20,
+            color: "#ff6666",
             health: 1,
             score: 10
           },
           {
-            type: "rectangle",
-            id: "block8",
-            x: 145,
-            y: 80,
-            width: 40,
-            height: 20,
+            type: "circle",
+            id: "c2",
+            x: 250,
+            y: 60,
+            radius: 20,
+            color: "#66ff66",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "circle",
+            id: "c3",
+            x: 50,
+            y: 200,
+            radius: 20,
+            color: "#6666ff",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "circle",
+            id: "c4",
+            x: 250,
+            y: 200,
+            radius: 20,
+            color: "#ffff66",
+            health: 1,
+            score: 10
+          },
+          {
+            type: "ellipse",
+            id: "e1",
+            x: 150,
+            y: 100,
+            radiusX: 60,
+            radiusY: 15,
+            color: "#ff66ff",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "ellipse",
+            id: "e2",
+            x: 150,
+            y: 180,
+            radiusX: 60,
+            radiusY: 15,
+            color: "#66ffff",
+            health: 2,
+            score: 20
+          },
+          {
+            type: "polygon",
+            id: "p1",
+            points: [
+              {x: 100, y: 130},
+              {x: 130, y: 150},
+              {x: 100, y: 170},
+              {x: 70, y: 150}
+            ],
+            color: "#ff9966",
+            health: 2,
+            score: 25
+          },
+          {
+            type: "polygon",
+            id: "p2",
+            points: [
+              {x: 200, y: 130},
+              {x: 230, y: 150},
+              {x: 200, y: 170},
+              {x: 170, y: 150}
+            ],
             color: "#99ff66",
             health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block9",
-            x: 195,
-            y: 80,
-            width: 40,
-            height: 20,
-            color: "#6699ff",
-            health: 3,
-            score: 30
-          },
-          {
-            type: "rectangle",
-            id: "block10",
-            x: 70,
-            y: 120,
-            width: 40,
-            height: 20,
-            color: "#ff66cc",
-            health: 2,
-            score: 20
-          },
-          {
-            type: "rectangle",
-            id: "block11",
-            x: 120,
-            y: 120,
-            width: 40,
-            height: 20,
-            color: "#66ffcc",
-            health: 1,
-            score: 10
-          },
-          {
-            type: "rectangle",
-            id: "block12",
-            x: 170,
-            y: 120,
-            width: 40,
-            height: 20,
-            color: "#cc66ff",
-            health: 3,
-            score: 30
+            score: 25
           }
         ],
         bounds: {
@@ -735,54 +669,176 @@
 
     // Класс для обработки физики
     class PhysicsEngine {
-      // Столкновение круга с прямоугольником
-      circleRectCollision(ball, rect) {
-        // Ближайшая точка на прямоугольнике к центру шара
-        let closestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.width));
-        let closestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.height));
+      // Столкновение круга с кругом
+      circleCircleCollision(ball, circle) {
+        const dx = ball.x - circle.x;
+        const dy = ball.y - circle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (ball.radius + circle.radius);
+      }
+
+      // Столкновение круга с эллипсом
+      circleEllipseCollision(ball, ellipse) {
+        // Учет поворота эллипса
+        const cos = Math.cos(ellipse.rotation || 0);
+        const sin = Math.sin(ellipse.rotation || 0);
         
-        // Расстояние от центра шара до ближайшей точки
-        const distanceX = ball.x - closestX;
-        const distanceY = ball.y - closestY;
-        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        const dx = ball.x - ellipse.x;
+        const dy = ball.y - ellipse.y;
+        
+        // Поворот координат в систему эллипса
+        const rotatedX = dx * cos + dy * sin;
+        const rotatedY = -dx * sin + dy * cos;
+        
+        // Проверка столкновения
+        const normalized = (rotatedX * rotatedX) / (ellipse.radiusX * ellipse.radiusX) + 
+                          (rotatedY * rotatedY) / (ellipse.radiusY * ellipse.radiusY);
+        
+        return normalized <= 1 + (ball.radius / Math.min(ellipse.radiusX, ellipse.radiusY));
+      }
+
+      // Столкновение круга с полигоном
+      circlePolygonCollision(ball, polygon) {
+        for (let i = 0; i < polygon.points.length; i++) {
+          const p1 = polygon.points[i];
+          const p2 = polygon.points[(i + 1) % polygon.points.length];
+          
+          // Проверка столкновения с ребром
+          if (this.circleLineCollision(ball, p1, p2)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // Столкновение круга с отрезком
+      circleLineCollision(ball, p1, p2) {
+        // Вектор отрезка
+        const lineVec = { x: p2.x - p1.x, y: p2.y - p1.y };
+        // Вектор от начала отрезка к центру шара
+        const ballVec = { x: ball.x - p1.x, y: ball.y - p1.y };
+        
+        const lineLengthSquared = lineVec.x * lineVec.x + lineVec.y * lineVec.y;
+        const dotProduct = ballVec.x * lineVec.x + ballVec.y * lineVec.y;
+        
+        let t = Math.max(0, Math.min(1, dotProduct / lineLengthSquared));
+        
+        // Ближайшая точка на отрезке
+        const closestPoint = {
+          x: p1.x + t * lineVec.x,
+          y: p1.y + t * lineVec.y
+        };
+        
+        // Расстояние до ближайшей точки
+        const dx = ball.x - closestPoint.x;
+        const dy = ball.y - closestPoint.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
         return distance < ball.radius;
       }
 
-      // Расчет нормали отскока от прямоугольника
-      calculateRectBounceNormal(ball, rect) {
-        // Определяем, с какой стороны произошло столкновение
-        const ballCenterX = ball.x;
-        const ballCenterY = ball.y;
+      // Столкновение круга с дугой (упрощенно как с эллипсом)
+      circleArcCollision(ball, arc) {
+        // Для упрощения считаем дугу как часть эллипса
+        const ellipse = {
+          x: arc.x,
+          y: arc.y,
+          radiusX: arc.radiusX,
+          radiusY: arc.radiusY,
+          rotation: arc.rotation || 0
+        };
         
-        // Расстояния до каждой стороны прямоугольника
-        const distLeft = Math.abs(ballCenterX - rect.x);
-        const distRight = Math.abs(ballCenterX - (rect.x + rect.width));
-        const distTop = Math.abs(ballCenterY - rect.y);
-        const distBottom = Math.abs(ballCenterY - (rect.y + rect.height));
+        if (!this.circleEllipseCollision(ball, ellipse)) {
+          return false;
+        }
         
-        // Находим минимальное расстояние
-        const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+        // Проверяем, что точка касания находится в пределах углов дуги
+        const angle = Math.atan2(ball.y - arc.y, ball.x - arc.x);
+        const normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
         
-        // Определяем нормаль в зависимости от ближайшей стороны
-        if (minDist === distLeft) return { x: -1, y: 0 };
-        if (minDist === distRight) return { x: 1, y: 0 };
-        if (minDist === distTop) return { x: 0, y: -1 };
-        return { x: 0, y: 1 };
+        return normalizedAngle >= arc.startAngle && normalizedAngle <= arc.endAngle;
+      }
+
+      // Расчет нормали отскока
+      calculateBounceNormal(ball, shape) {
+        let normal = { x: 0, y: 0 };
+        
+        switch (shape.type) {
+          case 'circle':
+            const dx = ball.x - shape.x;
+            const dy = ball.y - shape.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            normal = { x: dx / distance, y: dy / distance };
+            break;
+            
+          case 'ellipse':
+          case 'arc':
+            // Для эллипса/дуги нормаль зависит от положения точки касания
+            const cos = Math.cos(shape.rotation || 0);
+            const sin = Math.sin(shape.rotation || 0);
+            const localX = (ball.x - shape.x) * cos + (ball.y - shape.y) * sin;
+            const localY = -(ball.x - shape.x) * sin + (ball.y - shape.y) * cos;
+            
+            const gradientX = (2 * localX) / (shape.radiusX * shape.radiusX);
+            const gradientY = (2 * localY) / (shape.radiusY * shape.radiusY);
+            
+            // Поворот нормали обратно в глобальную систему
+            normal = {
+              x: gradientX * cos - gradientY * sin,
+              y: gradientX * sin + gradientY * cos
+            };
+            
+            const length = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+            normal.x /= length;
+            normal.y /= length;
+            break;
+            
+          case 'polygon':
+            // Для полигона находим ближайшее ребро
+            let minDistance = Infinity;
+            for (let i = 0; i < shape.points.length; i++) {
+              const p1 = shape.points[i];
+              const p2 = shape.points[(i + 1) % shape.points.length];
+              
+              const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
+              const toBall = { x: ball.x - p1.x, y: ball.y - p1.y };
+              
+              const edgeLength = Math.sqrt(edge.x * edge.x + edge.y * edge.y);
+              const edgeNormal = { x: -edge.y / edgeLength, y: edge.x / edgeLength };
+              
+              const distance = Math.abs(toBall.x * edgeNormal.x + toBall.y * edgeNormal.y);
+              
+              if (distance < minDistance) {
+                minDistance = distance;
+                normal = edgeNormal;
+                
+                // Проверяем направление нормали
+                const dot = toBall.x * edgeNormal.x + toBall.y * edgeNormal.y;
+                if (dot < 0) {
+                  normal.x = -normal.x;
+                  normal.y = -normal.y;
+                }
+              }
+            }
+            break;
+        }
+        
+        return normal;
       }
 
       // Обработка отскока
-      handleBounce(ball, normal) {
+      handleBounce(ball, shape, normal) {
         const dotProduct = ball.vx * normal.x + ball.vy * normal.y;
         
-        // Коэффициент отскока
-        const bounceFactor = 0.95;
+        // Коэффициент отскока зависит от типа фигуры
+        const bounceFactor = 0.8;
         
         ball.vx = ball.vx - 2 * dotProduct * normal.x * bounceFactor;
         ball.vy = ball.vy - 2 * dotProduct * normal.y * bounceFactor;
         
         // Коррекция позиции чтобы избежать залипания
         const overlap = ball.radius + 2;
+        
         ball.x += normal.x * overlap;
         ball.y += normal.y * overlap;
       }
@@ -1040,9 +1096,27 @@
           const shape = this.shapes[i];
           if (!shape.active) continue;
           
-          if (this.physics.circleRectCollision(this.ball, shape)) {
-            const normal = this.physics.calculateRectBounceNormal(this.ball, shape);
-            this.physics.handleBounce(this.ball, normal);
+          let collision = false;
+          let normal = { x: 0, y: 0 };
+
+          switch (shape.type) {
+            case 'circle':
+              collision = this.physics.circleCircleCollision(this.ball, shape);
+              break;
+            case 'ellipse':
+              collision = this.physics.circleEllipseCollision(this.ball, shape);
+              break;
+            case 'polygon':
+              collision = this.physics.circlePolygonCollision(this.ball, shape);
+              break;
+            case 'arc':
+              collision = this.physics.circleArcCollision(this.ball, shape);
+              break;
+          }
+
+          if (collision) {
+            normal = this.physics.calculateBounceNormal(this.ball, shape);
+            this.physics.handleBounce(this.ball, shape, normal);
             
             // Уменьшаем здоровье фигуры
             shape.health--;
@@ -1065,6 +1139,20 @@
         if (activeShapes.length === 0) {
           this.showGameOver();
         }
+      }
+      
+      // Добавляем метод для проверки столкновения с прямоугольником (для платформы)
+      circleRectCollision(ball, rect) {
+        // Ближайшая точка на прямоугольнике к центру шара
+        let closestX = Math.max(rect.x, Math.min(ball.x, rect.x + rect.width));
+        let closestY = Math.max(rect.y, Math.min(ball.y, rect.y + rect.height));
+        
+        // Расстояние от центра шара до ближайшей точки
+        const distanceX = ball.x - closestX;
+        const distanceY = ball.y - closestY;
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        
+        return distance < ball.radius;
       }
       
       updateUI() {
@@ -1102,7 +1190,44 @@
           this.ctx.globalAlpha = alpha;
           
           this.ctx.fillStyle = shape.color;
-          this.ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+          
+          switch (shape.type) {
+            case 'circle':
+              this.ctx.beginPath();
+              this.ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+              this.ctx.fill();
+              break;
+              
+            case 'ellipse':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+              
+            case 'polygon':
+              this.ctx.beginPath();
+              this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+              for (let i = 1; i < shape.points.length; i++) {
+                this.ctx.lineTo(shape.points[i].x, shape.points[i].y);
+              }
+              this.ctx.closePath();
+              this.ctx.fill();
+              break;
+              
+            case 'arc':
+              this.ctx.save();
+              this.ctx.translate(shape.x, shape.y);
+              this.ctx.rotate(shape.rotation || 0);
+              this.ctx.beginPath();
+              this.ctx.ellipse(0, 0, shape.radiusX, shape.radiusY, 0, shape.startAngle, shape.endAngle);
+              this.ctx.fill();
+              this.ctx.restore();
+              break;
+          }
           
           this.ctx.globalAlpha = 1;
         });
